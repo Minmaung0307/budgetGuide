@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="my">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>US Life Guide</title>
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://cdn-icons-png.flaticon.com/512/330/330459.png"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Chart.js ဖြုတ်လိုက်ပါပြီ -->
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  </head>
+  <body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="screen active">
+      <div class="center-box">
+        <h1>🇺🇸 US Life Guide</h1>
+        <p>ဘဝနေထိုင်မှု၊ ငွေကြေးနှင့် အထွေထွေလမ်းညွှန်</p>
+        <button onclick="signIn()" class="btn-google">
+          <i class="fab fa-google"></i> Login with Google
+        </button>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appScreen" class="screen">
+      <header>
+        <div class="logo">US Life 🇺🇸</div>
+        <button onclick="logout()" class="icon-btn">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </header>
+
+      <div id="contentArea">
+        <!-- 1. WALLET TAB -->
+        <div id="tab-wallet" class="tab-content active">
+          <!-- (ပြင်ဆင်ချက်) အပေါ်က monthPicker အပိုကို ဖျက်လိုက်ပါပြီ -->
+
+          <!-- Month Picker နှင့် Year View ခလုတ် တွဲလျက် -->
+          <div
+            style="
+              text-align: center;
+              margin-bottom: 10px;
+              display: flex;
+              justify-content: center;
+              gap: 10px;
+            "
+          >
+            <input
+              type="month"
+              id="monthPicker"
+              onchange="filterDataByMonth()"
+              style="
+                width: auto;
+                padding: 8px;
+                border-radius: 20px;
+                border: 1px solid #ddd;
+              "
+            />
+
+            <!-- Yearly Report Button -->
+            <button
+              onclick="openYearModal()"
+              style="
+                padding: 8px 15px;
+                border-radius: 20px;
+                border: 1px solid #2563eb;
+                background: white;
+                color: #2563eb;
+                font-weight: bold;
+              "
+            >
+              <i class="fas fa-calendar-alt"></i> Year View
+            </button>
+          </div>
+
+          <!-- Balance Card -->
+          <div class="balance-card">
+            <small>Net Balance (လက်ကျန်)</small>
+            <h2 id="totalBalance">$0.00</h2>
+            <div class="row">
+              <div class="green">
+                <i class="fas fa-arrow-down"></i> In:
+                <span id="incDisplay">$0</span>
+              </div>
+              <div class="red">
+                <i class="fas fa-arrow-up"></i> Out:
+                <span id="expDisplay">$0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-row">
+            <button class="act-btn income" onclick="openTransModal('income')">
+              <i class="fas fa-plus-circle"></i> ဝင်ငွေ
+            </button>
+            <button class="act-btn expense" onclick="openTransModal('expense')">
+              <i class="fas fa-minus-circle"></i> ထွက်ငွေ
+            </button>
+          </div>
+
+          <!-- Subscriptions List -->
+          <div class="section-header">
+            <h3>🔄 လစဉ်ပေး (Subscriptions)</h3>
+            <button class="btn-small" onclick="openSubModal()">+ New</button>
+          </div>
+          <div id="subList" class="list-group"></div>
+
+          <!-- Recent Transactions List -->
+          <h3 style="margin-top: 20px">📝 ငွေစာရင်းမှတ်တမ်း</h3>
+          <div
+            id="transList"
+            class="list-group"
+            style="padding-bottom: 20px"
+          ></div>
+
+          <!-- Spacer for scrolling -->
+          <div style="height: 100px"></div>
+        </div>
+
+        <!-- (အကြံပြုချက်) Modal တွေကို Tab အပြင်ဘက် (Body အောက်ဆုံး) မှာ ထားတာ ပိုကောင်းပါတယ် -->
+        <!-- YEARLY REPORT MODAL -->
+        <div id="yearModal" class="modal">
+          <div class="modal-box">
+            <h3>📅 နှစ်ချုပ် စာရင်းချုပ် (Yearly Summary)</h3>
+
+            <div style="margin-bottom: 20px">
+              <label>Select Year:</label>
+              <select
+                id="yearSelect"
+                onchange="calculateYearly()"
+                style="padding: 8px; width: 100px"
+              >
+                <option value="2024">2024</option>
+                <option value="2025" selected>2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+              </select>
+            </div>
+
+            <div
+              class="balance-card"
+              style="box-shadow: none; border: 1px solid #eee"
+            >
+              <small>Net Saving (စုဆောင်းမိငွေ)</small>
+              <h2 id="yearNet" style="color: #2563eb">$0.00</h2>
+              <div class="row">
+                <div class="green">ဝင်ငွေ: <span id="yearInc">$0</span></div>
+                <div class="red">သုံးငွေ: <span id="yearExp">$0</span></div>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 20px;
+                text-align: left;
+                font-size: 0.9rem;
+                color: #555;
+              "
+            >
+              <p>
+                ℹ️ <b>မှတ်ချက်:</b> လစဉ်ပေး (Subscription) များကို (၁၂) လစာ
+                မြှောက်ပြီး ထည့်သွင်းတွက်ချက်ထားပါသည်။
+              </p>
+            </div>
+
+            <button
+              onclick="document.getElementById('yearModal').style.display='none'"
+              style="
+                margin-top: 20px;
+                background: #555;
+                color: white;
+                padding: 10px;
+                border: none;
+                width: 100%;
+                border-radius: 5px;
+              "
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. GUIDES TAB -->
+        <div id="tab-guides" class="tab-content">
+          <h3>📚 လမ်းညွှန်များ (Guides)</h3>
+          <div class="grid-menu">
+            <!-- 1. ID/SSN -->
+            <div
+              class="menu-item"
+              onclick="showGuide('id')"
+              style="background: #e3f2fd; color: #1565c0"
+            >
+              <div class="g-icon">🪪</div>
+              <div class="g-title">ID / SSN / EAD</div>
+            </div>
+
+            <!-- 2. Driving -->
+            <div
+              class="menu-item"
+              onclick="showGuide('driving')"
+              style="background: #f3e5f5; color: #6a1b9a"
+            >
+              <div class="g-icon">🚗</div>
+              <div class="g-title">Driver License</div>
+            </div>
+
+            <!-- 3. Housing -->
+            <div
+              class="menu-item"
+              onclick="showGuide('housing')"
+              style="background: #e8f5e9; color: #2e7d32"
+            >
+              <div class="g-icon">🏠</div>
+              <div class="g-title">အိမ်ဝယ် / ငှား</div>
+            </div>
+
+            <!-- 4. Car Buying -->
+            <div
+              class="menu-item"
+              onclick="showGuide('car')"
+              style="background: #fff3e0; color: #ef6c00"
+            >
+              <div class="g-icon">🚙</div>
+              <div class="g-title">ကားဝယ်နည်း</div>
+            </div>
+
+            <!-- 5. Jobs -->
+            <div
+              class="menu-item"
+              onclick="showGuide('jobs')"
+              style="background: #e0f7fa; color: #006064"
+            >
+              <div class="g-icon">💼</div>
+              <div class="g-title">အလုပ်ရှာဖွေနည်း</div>
+            </div>
+
+            <!-- 6. USCIS -->
+            <div
+              class="menu-item"
+              onclick="showGuide('uscis')"
+              style="background: #e0f2f1; color: #00695c"
+            >
+              <div class="g-icon">🗽</div>
+              <div class="g-title">Citizenship</div>
+            </div>
+
+            <!-- 7. SNAP -->
+            <div
+              class="menu-item"
+              onclick="showGuide('snap')"
+              style="background: #ffebee; color: #c62828"
+            >
+              <div class="g-icon">🍔</div>
+              <div class="g-title">Foodstamp (SNAP)</div>
+            </div>
+
+            <!-- 8. Rights -->
+            <div
+              class="menu-item"
+              onclick="showGuide('rights')"
+              style="background: #fff8e1; color: #f57f17"
+            >
+              <div class="g-icon">⚖️</div>
+              <div class="g-title">လူ့အခွင့်အရေး</div>
+            </div>
+
+            <!-- 9. Culture -->
+            <div
+              class="menu-item"
+              onclick="showGuide('culture')"
+              style="background: #fce4ec; color: #880e4f"
+            >
+              <div class="g-icon">🎉</div>
+              <div class="g-title">Culture / ဓလေ့</div>
+            </div>
+
+            <!-- 10. English -->
+            <div
+              class="menu-item"
+              onclick="showGuide('english')"
+              style="background: #f0f4c3; color: #827717"
+            >
+              <div class="g-icon">💬</div>
+              <div class="g-title">English လေ့လာရန်</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. NEAR ME TAB -->
+        <div id="tab-near" class="tab-content">
+          <h3>📍 Near Me (နီးစပ်ရာ ရှာဖွေရန်)</h3>
+          <div class="list-group">
+            <button class="map-btn" onclick="searchMap('cheap grocery store')">
+              🥦 ဈေးသက်သာသော ကုန်စုံဆိုင်များ
+            </button>
+            <button class="map-btn" onclick="searchMap('asian market')">
+              🍜 အာရှ/မြန်မာ ဆိုင်များ
+            </button>
+            <button
+              class="map-btn"
+              onclick="searchMap('gas station cheap price')"
+            >
+              ⛽ ဆီဈေးသက်သာသော ဆိုင်များ
+            </button>
+            <button class="map-btn" onclick="searchMap('burmese restaurant')">
+              🍲 မြန်မာ ထမင်းဆိုင်များ
+            </button>
+            <button class="map-btn" onclick="searchMap('public library')">
+              📚 စာကြည့်တိုက် (Wi-Fi Free)
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. CARE TAB -->
+        <div id="tab-care" class="tab-content">
+          <h3>❤️ Health & Community</h3>
+          <div class="card">
+            <h4>🏥 ကျန်းမာရေး (Health)</h4>
+            <p>
+              အမေရိကတွင် ကျန်းမာရေးစရိတ်ကြီးမားပါသည်။ အောက်ပါတို့ကို သိထားပါ-
+            </p>
+            <ul>
+              <li><b>Medicaid:</b> ဝင်ငွေနည်းသူများအတွက် အခမဲ့။</li>
+              <li>
+                <b>Urgent Care:</b> အသက်အန္တရာယ်မစိုးရိမ်ရလျှင် ER မသွားဘဲ
+                Urgent Care သွားပါ (ပိုသက်သာသည်)။
+              </li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>🤝 Community Services</h4>
+            <button
+              class="link-btn"
+              onclick="window.open('https://www.findhelp.org','_blank')"
+            >
+              🌐 FindHelp.org
+            </button>
+            <button
+              class="link-btn"
+              onclick="window.open('https://www.211.org','_blank')"
+            >
+              📞 Call 2-1-1
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('wallet')">
+          <i class="fas fa-wallet"></i><span>Wallet</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('guides')">
+          <i class="fas fa-book"></i><span>Guides</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('near')">
+          <i class="fas fa-map-marker-alt"></i><span>Near Me</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('care')">
+          <i class="fas fa-heart"></i><span>Care</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Transaction Modal (Income/Expense) -->
+    <div id="transModal" class="modal">
+      <div class="modal-box">
+        <h3 id="transTitle">Add Transaction</h3>
+        <!-- (New) Edit အတွက် ID သိမ်းမယ့်နေရာ -->
+        <input type="hidden" id="editTransId" />
+        <input type="hidden" id="transType" />
+        <input
+          type="number"
+          id="transAmount"
+          placeholder="Amount ($)"
+          step="0.01"
+        />
+        <input
+          type="text"
+          id="transNote"
+          placeholder="Note (e.g. Salary, Walmart)"
+        />
+        <input type="date" id="transDate" />
+        <div class="row">
+          <button onclick="closeModal('transModal')">Cancel</button>
+          <button onclick="saveTransaction()" class="primary">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div id="subModal" class="modal">
+      <div class="modal-box">
+        <h3 id="subTitle">Add Subscription</h3>
+
+        <!-- (New) Edit လုပ်ဖို့ ID သိမ်းမယ့်နေရာ -->
+        <input type="hidden" id="editSubId" />
+
+        <input type="text" id="subName" placeholder="Name (e.g. Netflix)" />
+        <input type="number" id="subCost" placeholder="Monthly Cost ($)" />
+        <input type="number" id="subDay" placeholder="Due Day (1-31)" />
+        <div class="row">
+          <button onclick="closeModal('subModal')">Cancel</button>
+          <button onclick="saveSub()" class="primary">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="guideModal" class="modal">
+      <div class="modal-box full-screen">
+        <div class="modal-header">
+          <h3 id="guideTitle">Title</h3>
+          <button onclick="closeModal('guideModal')">&times;</button>
+        </div>
+        <div id="guideContent" class="guide-body"></div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
