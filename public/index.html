@@ -309,25 +309,110 @@
         <!-- 3. NEAR ME TAB -->
         <div id="tab-near" class="tab-content">
           <h3>📍 Near Me (နီးစပ်ရာ ရှာဖွေရန်)</h3>
-          <div class="list-group">
-            <button class="map-btn" onclick="searchMap('cheap grocery store')">
-              🥦 ဈေးသက်သာသော ကုန်စုံဆိုင်များ
-            </button>
-            <button class="map-btn" onclick="searchMap('asian market')">
-              🍜 အာရှ/မြန်မာ ဆိုင်များ
-            </button>
-            <button
-              class="map-btn"
-              onclick="searchMap('gas station cheap price')"
+          <p style="color: #666; font-size: 12px; margin-bottom: 15px">
+            (ဖုန်း Location ဖွင့်ထားရန် လိုအပ်ပါသည်)
+          </p>
+
+          <div class="grid-menu">
+            <!-- 1. Cheap Grocery (အစိမ်း) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('cheap grocery store aldi walmart')"
+              style="background: #e8f5e9; color: #2e7d32"
             >
-              ⛽ ဆီဈေးသက်သာသော ဆိုင်များ
-            </button>
-            <button class="map-btn" onclick="searchMap('burmese restaurant')">
-              🍲 မြန်မာ ထမင်းဆိုင်များ
-            </button>
-            <button class="map-btn" onclick="searchMap('public library')">
-              📚 စာကြည့်တိုက် (Wi-Fi Free)
-            </button>
+              <div class="g-icon">🥦</div>
+              <div class="g-title">ဈေးသက်သာသော<br />ကုန်စုံဆိုင်များ</div>
+            </div>
+
+            <!-- 2. Asian Market (လိမ္မော်) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('asian supermarket burmese food')"
+              style="background: #fff3e0; color: #ef6c00"
+            >
+              <div class="g-icon">🍜</div>
+              <div class="g-title">အာရှ/မြန်မာ<br />စျေးဆိုင်များ</div>
+            </div>
+
+            <!-- 3. Burmese Restaurant (အနီ) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('burmese restaurant')"
+              style="background: #ffebee; color: #c62828"
+            >
+              <div class="g-icon">🍲</div>
+              <div class="g-title">မြန်မာ<br />ထမင်းဆိုင်များ</div>
+            </div>
+
+            <!-- 4. Gas Station (ခရမ်း) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('cheap gas station')"
+              style="background: #f3e5f5; color: #6a1b9a"
+            >
+              <div class="g-icon">⛽</div>
+              <div class="g-title">ဆီဈေးသက်သာသော<br />ဆိုင်များ</div>
+            </div>
+
+            <!-- 5. Thrift Stores (အညိုနု - NEW) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('thrift store goodwill')"
+              style="background: #efebe9; color: #5d4037"
+            >
+              <div class="g-icon">👕</div>
+              <div class="g-title">အဟောင်းတန်း<br />(Goodwill)</div>
+            </div>
+
+            <!-- 6. Pharmacy (အပြာနု - NEW) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('pharmacy cvs walgreens')"
+              style="background: #e3f2fd; color: #1565c0"
+            >
+              <div class="g-icon">💊</div>
+              <div class="g-title">ဆေးဆိုင်များ<br />(CVS/Walgreens)</div>
+            </div>
+
+            <!-- 7. Laundromat (မိုးပြာ - NEW) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('laundromat')"
+              style="background: #e0f7fa; color: #006064"
+            >
+              <div class="g-icon">ww</div>
+              <div class="g-title">အဝတ်လျှော်<br />ဆိုင်များ</div>
+            </div>
+
+            <!-- 8. Banks/ATM (အစိမ်းရင့် - NEW) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('bank atm')"
+              style="background: #f1f8e9; color: #33691e"
+            >
+              <div class="g-icon">🏦</div>
+              <div class="g-title">ဘဏ်နှင့်<br />ATM များ</div>
+            </div>
+
+            <!-- 9. Post Office (မီးခိုး - NEW) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('post office usps fedex')"
+              style="background: #f5f5f5; color: #424242"
+            >
+              <div class="g-icon">nm</div>
+              <div class="g-title">စာတိုက်<br />(USPS/FedEx)</div>
+            </div>
+
+            <!-- 10. Library (အဝါနု) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('public library')"
+              style="background: #fff8e1; color: #f57f17"
+            >
+              <div class="g-icon">📚</div>
+              <div class="g-title">စာကြည့်တိုက်<br />(Free Wi-Fi)</div>
+            </div>
           </div>
         </div>
 
