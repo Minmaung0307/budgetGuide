@@ -17,228 +17,372 @@ let currentMonth = new Date().toISOString().slice(0, 7);
 
 // --- AUTH ---
 function signIn() {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => alert(e.message));
+  auth
+    .signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch((e) => alert(e.message));
 }
-function logout() { auth.signOut(); location.reload(); }
+function logout() {
+  auth.signOut();
+  location.reload();
+}
 
-auth.onAuthStateChanged(user => {
-    if(user) {
-        currentUser = user;
-        document.getElementById('authScreen').classList.remove('active');
-        document.getElementById('appScreen').classList.add('active');
-        document.getElementById('monthPicker').value = currentMonth;
-        loadData(); 
-        filterDataByMonth(); 
-    } else {
-        document.getElementById('authScreen').classList.add('active');
-        document.getElementById('appScreen').classList.remove('active');
-    }
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById("authScreen").classList.remove("active");
+    document.getElementById("appScreen").classList.add("active");
+    document.getElementById("monthPicker").value = currentMonth;
+    loadData();
+    filterDataByMonth();
+  } else {
+    document.getElementById("authScreen").classList.add("active");
+    document.getElementById("appScreen").classList.remove("active");
+  }
 });
 
 // --- TABS ---
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.getElementById(`tab-${tabName}`).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((el) => el.classList.remove("active"));
+  document.getElementById(`tab-${tabName}`).classList.add("active");
+  document
+    .querySelectorAll(".nav-item")
+    .forEach((el) => el.classList.remove("active"));
+  event.currentTarget.classList.add("active");
 }
 
-// --- DATA & MONTHLY FILTER ---
+// --- NEW HELPER: GET ICON ---
+function getCategoryIcon(cat) {
+  const icons = {
+    Food: "🍔",
+    Rent: "🏠",
+    Utilities: "💡",
+    Transport: "🚗",
+    Insurance: "🛡️",
+    Shopping: "🛍️",
+    Salary: "💰",
+    Other: "📦",
+  };
+  return icons[cat] || "📝";
+}
+
+// --- UPDATED LOAD DATA (For Subscriptions) ---
 function loadData() {
-    db.collection('subscriptions').where('uid', '==', currentUser.uid).onSnapshot(snap => {
-        const list = document.getElementById('subList');
-        list.innerHTML = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            const div = document.createElement('div');
-            div.className = 'sub-item';
-            div.innerHTML = `
-                <div><b>${d.name}</b><br><small>Due Day: ${d.day}</small></div>
-                <div style="text-align:right; display:flex; align-items:center; gap:10px;">
-                    <div style="color:#d63031; font-weight:bold;">-$${d.cost}</div>
-                    <small onclick="openEditSub('${doc.id}', '${d.name}', '${d.cost}', '${d.day}')" style="color:#2563EB; cursor:pointer;"><i class="fas fa-pen"></i></small>
-                    <small onclick="deleteItem('subscriptions', '${doc.id}')" style="color:#888; cursor:pointer;"><i class="fas fa-trash"></i></small>
+  db.collection("subscriptions")
+    .where("uid", "==", currentUser.uid)
+    .onSnapshot((snap) => {
+      const list = document.getElementById("subList");
+      list.innerHTML = "";
+
+      if (snap.empty) {
+        list.innerHTML = `<div style="padding:10px; color:#aaa; font-size:12px;">No subscriptions</div>`;
+        return;
+      }
+
+      snap.forEach((doc) => {
+        const d = doc.data();
+        const div = document.createElement("div");
+        div.className = "sub-card";
+        div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px;">${d.name}</b>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <!-- Edit Button -->
+                        <small onclick="openEditSub('${doc.id}', '${d.name}', '${d.cost}', '${d.day}')" style="color:#2563EB; cursor:pointer;">
+                            <i class="fas fa-pen"></i>
+                        </small>
+                        
+                        <!-- Delete Button (New) -->
+                        <small onclick="deleteItem('subscriptions', '${doc.id}')" style="color:#EF4444; cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </small>
+                    </div>
+                </div>
+                <div style="font-size:12px; color:#666; margin:3px 0;">Due Day: ${d.day}</div>
+                <div style="color:#d63031; font-weight:bold;">$${d.cost}</div>
+            `;
+        list.appendChild(div);
+      });
+      // Recalculate balance whenever subs change
+      filterDataByMonth();
+    });
+}
+
+// --- UPDATED MONTHLY FILTER (For List, Balance & Budget Bar) ---
+function filterDataByMonth() {
+  currentMonth = document.getElementById("monthPicker").value;
+  const startStr = currentMonth + "-01";
+  const endStr = currentMonth + "-31";
+
+  db.collection("transactions")
+    .where("uid", "==", currentUser.uid)
+    .where("date", ">=", startStr)
+    .where("date", "<=", endStr)
+    .orderBy("date", "desc")
+    .get()
+    .then((snap) => {
+      let mInc = 0;
+      let mExp = 0;
+      const list = document.getElementById("transList");
+      list.innerHTML = "";
+
+      if (snap.empty)
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">No transactions</div>`;
+
+      snap.forEach((doc) => {
+        const d = doc.data();
+        if (d.type === "income") mInc += d.amount;
+        else mExp += d.amount;
+
+        // NEW: Better List Design with Icons
+        const div = document.createElement("div");
+        div.className = "trans-item";
+        div.innerHTML = `
+                <div class="t-icon ${d.type}">${getCategoryIcon(
+          d.category || "Other"
+        )}</div>
+                <div class="t-info">
+                    <span class="t-title">${d.note || d.category}</span>
+                    <span class="t-date">${d.date}</span>
+                </div>
+                <div style="text-align:right;">
+                    <div class="t-amount ${d.type}">${
+          d.type === "income" ? "+" : "-"
+        }$${d.amount}</div>
+                    <div style="margin-top:5px;">
+                        <small onclick="openEditTrans('${doc.id}', '${
+          d.type
+        }', '${d.amount}', '${d.note}', '${
+          d.date
+        }')" style="color:#2563EB; margin-right:8px;"><i class="fas fa-pen"></i></small>
+                        <small onclick="deleteItem('transactions', '${
+                          doc.id
+                        }')" style="color:#888;"><i class="fas fa-trash"></i></small>
+                    </div>
                 </div>`;
-            list.appendChild(div);
+        list.appendChild(div);
+      });
+
+      // Calculate with Subscriptions
+      db.collection("subscriptions")
+        .where("uid", "==", currentUser.uid)
+        .get()
+        .then((subSnap) => {
+          let subTotal = 0;
+          subSnap.forEach((doc) => (subTotal += doc.data().cost));
+
+          const totalExp = mExp + subTotal;
+          const net = mInc - totalExp;
+
+          // 1. Update Cards
+          document.getElementById("incDisplay").innerText = `$${mInc.toFixed(
+            2
+          )}`;
+          document.getElementById(
+            "expDisplay"
+          ).innerText = `$${totalExp.toFixed(2)}`;
+          document.getElementById("totalBalance").innerText = `$${net.toFixed(
+            2
+          )}`;
+
+          // 2. Update Budget Health Bar
+          // Logic: If Income is 0, bar is 100% red. Else, calculate % of income spent.
+          const bar = document.getElementById("progressBar");
+          const percentText = document.getElementById("budgetPercent");
+
+          if (mInc === 0 && totalExp > 0) {
+            bar.style.width = "100%";
+            bar.style.backgroundColor = "#EF4444"; // Red
+            percentText.innerText = "Over Budget";
+          } else if (mInc === 0) {
+            bar.style.width = "0%";
+            percentText.innerText = "0%";
+          } else {
+            let percent = (totalExp / mInc) * 100;
+            if (percent > 100) percent = 100; // Cap at 100 visually
+
+            bar.style.width = `${percent}%`;
+            percentText.innerText = `${Math.round(percent)}%`;
+
+            // Color changes based on health
+            if (percent < 50) bar.style.backgroundColor = "#10B981"; // Green
+            else if (percent < 80)
+              bar.style.backgroundColor = "#F59E0B"; // Orange
+            else bar.style.backgroundColor = "#EF4444"; // Red
+          }
         });
     });
 }
 
-function filterDataByMonth() {
-    currentMonth = document.getElementById('monthPicker').value;
-    const startStr = currentMonth + "-01";
-    const endStr = currentMonth + "-31";
-
-    db.collection('transactions')
-      .where('uid', '==', currentUser.uid)
-      .where('date', '>=', startStr)
-      .where('date', '<=', endStr)
-      .orderBy('date', 'desc')
-      .get()
-      .then(snap => {
-          let mInc = 0;
-          let mExp = 0;
-          const list = document.getElementById('transList');
-          list.innerHTML = '';
-
-          if(snap.empty) list.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">No transactions</div>`;
-
-          snap.forEach(doc => {
-              const d = doc.data();
-              if (d.type === 'income') mInc += d.amount;
-              else mExp += d.amount;
-
-              const div = document.createElement('div');
-              div.className = `trans-item ${d.type}`;
-              div.innerHTML = `
-                <div style="flex:1;"><b>${d.note}</b><br><small>${d.date}</small></div>
-                <div style="text-align:right; display:flex; align-items:center; gap:10px;">
-                    <div style="font-weight:bold;">${d.type==='income'?'+':'-'}$${d.amount}</div>
-                    <small onclick="openEditTrans('${doc.id}', '${d.type}', '${d.amount}', '${d.note}', '${d.date}')" style="color:#2563EB; cursor:pointer;"><i class="fas fa-pen"></i></small>
-                    <small onclick="deleteItem('transactions', '${doc.id}')" style="color:#888; cursor:pointer;"><i class="fas fa-trash"></i></small>
-                </div>`;
-              list.appendChild(div);
-          });
-
-          db.collection('subscriptions').where('uid', '==', currentUser.uid).get().then(subSnap => {
-              let subTotal = 0;
-              subSnap.forEach(doc => subTotal += doc.data().cost);
-              
-              document.getElementById('incDisplay').innerText = `$${mInc.toFixed(2)}`;
-              const totalExp = mExp + subTotal;
-              document.getElementById('expDisplay').innerText = `$${totalExp.toFixed(2)}`;
-              const net = mInc - totalExp;
-              const balanceEl = document.getElementById('totalBalance');
-              balanceEl.innerText = `$${net.toFixed(2)}`;
-              balanceEl.style.color = net >= 0 ? "#10B981" : "#EF4444";
-          });
-      });
-}
-
 // --- YEARLY SUMMARY LOGIC (NEW) ---
 function openYearModal() {
-    document.getElementById('yearModal').style.display = 'flex';
-    calculateYearly();
+  document.getElementById("yearModal").style.display = "flex";
+  calculateYearly();
 }
 
 function calculateYearly() {
-    const year = document.getElementById('yearSelect').value;
-    const startStr = year + "-01-01";
-    const endStr = year + "-12-31";
+  const year = document.getElementById("yearSelect").value;
+  const startStr = year + "-01-01";
+  const endStr = year + "-12-31";
 
-    // 1. Get Transactions for whole year
-    db.collection('transactions')
-      .where('uid', '==', currentUser.uid)
-      .where('date', '>=', startStr)
-      .where('date', '<=', endStr)
-      .get()
-      .then(snap => {
-          let yInc = 0;
-          let yExp = 0;
+  // 1. Get Transactions for whole year
+  db.collection("transactions")
+    .where("uid", "==", currentUser.uid)
+    .where("date", ">=", startStr)
+    .where("date", "<=", endStr)
+    .get()
+    .then((snap) => {
+      let yInc = 0;
+      let yExp = 0;
 
-          snap.forEach(doc => {
-              const d = doc.data();
-              if (d.type === 'income') yInc += d.amount;
-              else yExp += d.amount;
-          });
-
-          // 2. Get Subscriptions (Multiply by 12 for yearly projection)
-          db.collection('subscriptions').where('uid', '==', currentUser.uid).get().then(subSnap => {
-              let subTotal = 0;
-              subSnap.forEach(doc => subTotal += doc.data().cost);
-              const yearlySubTotal = subTotal * 12;
-
-              const totalYearExp = yExp + yearlySubTotal;
-              const net = yInc - totalYearExp;
-
-              document.getElementById('yearInc').innerText = `$${yInc.toFixed(2)}`;
-              document.getElementById('yearExp').innerText = `$${totalYearExp.toFixed(2)}`;
-              
-              const netEl = document.getElementById('yearNet');
-              netEl.innerText = `$${net.toFixed(2)}`;
-              netEl.style.color = net >= 0 ? "#10B981" : "#EF4444";
-          });
+      snap.forEach((doc) => {
+        const d = doc.data();
+        if (d.type === "income") yInc += d.amount;
+        else yExp += d.amount;
       });
+
+      // 2. Get Subscriptions (Multiply by 12 for yearly projection)
+      db.collection("subscriptions")
+        .where("uid", "==", currentUser.uid)
+        .get()
+        .then((subSnap) => {
+          let subTotal = 0;
+          subSnap.forEach((doc) => (subTotal += doc.data().cost));
+          const yearlySubTotal = subTotal * 12;
+
+          const totalYearExp = yExp + yearlySubTotal;
+          const net = yInc - totalYearExp;
+
+          document.getElementById("yearInc").innerText = `$${yInc.toFixed(2)}`;
+          document.getElementById(
+            "yearExp"
+          ).innerText = `$${totalYearExp.toFixed(2)}`;
+
+          const netEl = document.getElementById("yearNet");
+          netEl.innerText = `$${net.toFixed(2)}`;
+          netEl.style.color = net >= 0 ? "#10B981" : "#EF4444";
+        });
+    });
 }
 
 // --- MODAL & SAVE ACTIONS ---
 function openTransModal(type) {
-    document.getElementById('editTransId').value = "";
-    document.getElementById('transType').value = type;
-    document.getElementById('transTitle').innerText = type === 'income' ? 'Add Income 💰' : 'Add Expense 💸';
-    document.getElementById('transAmount').value = "";
-    document.getElementById('transNote').value = "";
-    document.getElementById('transDate').valueAsDate = new Date();
-    document.getElementById('transModal').style.display = 'flex';
+  document.getElementById("editTransId").value = "";
+  document.getElementById("transType").value = type;
+  document.getElementById("transTitle").innerText =
+    type === "income" ? "Add Income 💰" : "Add Expense 💸";
+  document.getElementById("transAmount").value = "";
+  document.getElementById("transNote").value = "";
+  document.getElementById("transDate").valueAsDate = new Date();
+  document.getElementById("transModal").style.display = "flex";
 }
 
 function openEditTrans(id, type, amount, note, date) {
-    document.getElementById('editTransId').value = id;
-    document.getElementById('transType').value = type;
-    document.getElementById('transTitle').innerText = "Edit Transaction";
-    document.getElementById('transAmount').value = amount;
-    document.getElementById('transNote').value = note;
-    document.getElementById('transDate').value = date;
-    document.getElementById('transModal').style.display = 'flex';
+  document.getElementById("editTransId").value = id;
+  document.getElementById("transType").value = type;
+  document.getElementById("transTitle").innerText = "Edit Transaction";
+  document.getElementById("transAmount").value = amount;
+  document.getElementById("transNote").value = note;
+  document.getElementById("transDate").value = date;
+  document.getElementById("transModal").style.display = "flex";
 }
 
 function saveTransaction() {
-    const id = document.getElementById('editTransId').value;
-    const type = document.getElementById('transType').value;
-    const amount = parseFloat(document.getElementById('transAmount').value);
-    const note = document.getElementById('transNote').value;
-    const date = document.getElementById('transDate').value;
+  const id = document.getElementById("editTransId").value;
+  const type = document.getElementById("transType").value;
+  const amount = parseFloat(document.getElementById("transAmount").value);
+  const note = document.getElementById("transNote").value;
+  const date = document.getElementById("transDate").value;
 
-    if(!amount || !date) return alert("Please fill details");
-    const data = { uid: currentUser.uid, type, amount, note, date, created: Date.now() };
+  if (!amount || !date) return alert("Please fill details");
+  const data = {
+    uid: currentUser.uid,
+    type,
+    amount,
+    note,
+    date,
+    created: Date.now(),
+  };
 
-    if (id) {
-        db.collection('transactions').doc(id).update(data).then(() => { closeModal('transModal'); filterDataByMonth(); });
-    } else {
-        db.collection('transactions').add(data).then(() => { closeModal('transModal'); filterDataByMonth(); });
-    }
+  if (id) {
+    db.collection("transactions")
+      .doc(id)
+      .update(data)
+      .then(() => {
+        closeModal("transModal");
+        filterDataByMonth();
+      });
+  } else {
+    db.collection("transactions")
+      .add(data)
+      .then(() => {
+        closeModal("transModal");
+        filterDataByMonth();
+      });
+  }
 }
 
-function openSubModal() { 
-    document.getElementById('editSubId').value = ""; 
-    document.getElementById('subTitle').innerText = "Add Subscription";
-    document.getElementById('subName').value = "";
-    document.getElementById('subCost').value = "";
-    document.getElementById('subDay').value = "";
-    document.getElementById('subModal').style.display = 'flex'; 
+function openSubModal() {
+  document.getElementById("editSubId").value = "";
+  document.getElementById("subTitle").innerText = "Add Subscription";
+  document.getElementById("subName").value = "";
+  document.getElementById("subCost").value = "";
+  document.getElementById("subDay").value = "";
+  document.getElementById("subModal").style.display = "flex";
 }
 
 function openEditSub(id, name, cost, day) {
-    document.getElementById('editSubId').value = id;
-    document.getElementById('subTitle').innerText = "Edit Subscription";
-    document.getElementById('subName').value = name;
-    document.getElementById('subCost').value = cost;
-    document.getElementById('subDay').value = day;
-    document.getElementById('subModal').style.display = 'flex';
+  document.getElementById("editSubId").value = id;
+  document.getElementById("subTitle").innerText = "Edit Subscription";
+  document.getElementById("subName").value = name;
+  document.getElementById("subCost").value = cost;
+  document.getElementById("subDay").value = day;
+  document.getElementById("subModal").style.display = "flex";
 }
 
 function saveSub() {
-    const id = document.getElementById('editSubId').value;
-    const name = document.getElementById('subName').value;
-    const cost = parseFloat(document.getElementById('subCost').value);
-    const day = document.getElementById('subDay').value;
+  const id = document.getElementById("editSubId").value;
+  const name = document.getElementById("subName").value;
+  const cost = parseFloat(document.getElementById("subCost").value);
+  const day = document.getElementById("subDay").value;
 
-    if(!name || !cost) return alert("Please fill details");
-    const data = { uid: currentUser.uid, name, cost, day, created: Date.now() };
+  if (!name || !cost) return alert("Please fill details");
+  const data = { uid: currentUser.uid, name, cost, day, created: Date.now() };
 
-    if (id) {
-        db.collection('subscriptions').doc(id).update(data).then(() => { closeModal('subModal'); filterDataByMonth(); });
-    } else {
-        db.collection('subscriptions').add(data).then(() => { closeModal('subModal'); filterDataByMonth(); });
-    }
+  if (id) {
+    db.collection("subscriptions")
+      .doc(id)
+      .update(data)
+      .then(() => {
+        closeModal("subModal");
+        filterDataByMonth();
+      });
+  } else {
+    db.collection("subscriptions")
+      .add(data)
+      .then(() => {
+        closeModal("subModal");
+        filterDataByMonth();
+      });
+  }
 }
 
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function deleteItem(col, id) { if(confirm("Delete this item?")) db.collection(col).doc(id).delete().then(() => filterDataByMonth()); }
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+function deleteItem(col, id) {
+  if (confirm("Delete this item?"))
+    db.collection(col)
+      .doc(id)
+      .delete()
+      .then(() => filterDataByMonth());
+}
 
 // --- DETAILED GUIDES CONTENT (Updated) ---
 const guidesData = {
-    id: `
+  id: `
         <h4>1. Social Security Number (SSN)</h4>
         <p>SSN မရှိလျှင် အမေရိကမှာ အလုပ်လုပ်လို့မရ၊ ဘဏ်ဖွင့်မရ၊ Credit ဆောက်မရပါ။ ရောက်ပြီး ၁၀ ရက်လောက်နေရင် သွားလုပ်လို့ရပါပြီ။</p>
         <ul>
@@ -254,7 +398,7 @@ const guidesData = {
             <li><b>လိုအပ်ချက်:</b> "6 Points ID" စနစ်သုံးလေ့ရှိသည်။ (Passport, SSN Card, I-94) + အိမ်လိပ်စာပါသော စာရွက် ၂ ခု (ဥပမာ- ဘဏ်စာရွက်၊ အိမ်ငှားစာချုပ်)။</li>
         </ul>
     `,
-    driving: `
+  driving: `
         <h4>ယာဉ်မောင်းလိုင်စင် လျှောက်ခြင်း</h4>
         <p>ကားမောင်းတတ်မှ အလုပ်သွားလာရ လွယ်ကူပါမည်။ အဆင့် ၃ ဆင့် ရှိပါသည်။</p>
         
@@ -278,7 +422,7 @@ const guidesData = {
             <li>အောင်မြင်ပါက ယာယီလိုင်စင်ချက်ချင်းရပြီး ကဒ်အစစ် အိမ်သို့ပို့ပေးမည်။</li>
         </ul>
     `,
-    housing: `
+  housing: `
         <h4>အိမ်ငှားခြင်း (Renting)</h4>
         <p>အမေရိကမှာ အိမ်ငှားရတာ မလွယ်ကူပါ။ အောက်ပါအချက်များ ပြင်ဆင်ထားပါ:</p>
         <ul>
@@ -295,7 +439,7 @@ const guidesData = {
             <li><b>Realtor:</b> ဝယ်သူဘက်မှ အိမ်ပွဲစားခ ပေးစရာမလိုပါ။ (ရောင်းသူက ပေးရသည်)။ ထို့ကြောင့် Realtor ခေါ်ပြီး ဝယ်တာ ပိုစိတ်ချရသည်။</li>
         </ul>
     `,
-    car: `
+  car: `
         <h4>ကားဝယ်နည်း (Car Buying)</h4>
         <p>ကားမရှိလျှင် ခြေပြတ်သကဲ့သို့ ဖြစ်နေပါလိမ့်မည်။</p>
         
@@ -317,7 +461,7 @@ const guidesData = {
             <li>Liability (သူများကို လျော်ပေးတာ) နဲ့ Full Coverage (ကိုယ့်ကားပါ လျော်ပေးတာ) ၂ မျိုးရှိသည်။</li>
         </ul>
     `,
-    jobs: `
+  jobs: `
         <h4>အမေရိကတွင် အလုပ်ရှာဖွေခြင်း</h4>
         <p>အလုပ်အမျိုးအစားအလိုက် ရှာဖွေနည်း ကွာခြားပါသည်။ အရေးကြီးဆုံးမှာ SSN နှင့် Work Permit (EAD) သို့မဟုတ် Green Card ရှိရန် လိုပါသည်။</p>
         
@@ -354,7 +498,7 @@ const guidesData = {
             <li><b>Tax:</b> W2 (ကုမ္ပဏီဝန်ထမ်း) သို့မဟုတ် 1099 (Contractor) ခွဲခြားသိထားပါ။</li>
         </ul>
     `,
-    uscis: `
+  uscis: `
         <h4>Citizenship (နိုင်ငံသားလျှောက်ခြင်း)</h4>
         <p>Green Card ရပြီး ၅ နှစ်ပြည့်လျှင် (သို့မဟုတ်) အမေရိကန်နိုင်ငံသားနှင့် လက်ထပ်ပြီး Green Card ရသူဖြစ်လျှင် ၃ နှစ်ပြည့်ပါက နိုင်ငံသားလျှောက်ခွင့်ရှိသည်။</p>
         <ul>
@@ -364,7 +508,7 @@ const guidesData = {
             <li>အင်တာဗျူးအောင်ပြီးလျှင် "သစ္စာဆိုပွဲ (Oath Ceremony)" တက်ရောက်ပြီးမှ နိုင်ငံသားလက်မှတ် ရရှိမည်။</li>
         </ul>
     `,
-    snap: `
+  snap: `
         <h4>Food Stamps (SNAP)</h4>
         <p>ဝင်ငွေနည်းပါးသော မိသားစုများအတွက် အစိုးရမှ အစားအသောက်ဝယ်ရန် ထောက်ပံ့သော ကဒ် (EBT Card) ဖြစ်သည်။</p>
         <ul>
@@ -374,8 +518,8 @@ const guidesData = {
             <li><b>သတိပြုရန်:</b> လိမ်လည်လျှောက်ထားခြင်း မပြုရ။ နောင်တွင် Immigration ကိစ္စများ၌ ပြဿနာရှိနိုင်သည်။</li>
         </ul>
     `,
-    // ၁။ လူ့အခွင့်အရေးနှင့် ဥပဒေ
-    rights: `
+  // ၁။ လူ့အခွင့်အရေးနှင့် ဥပဒေ
+  rights: `
         <h4>အမေရိကန် ဥပဒေနှင့် လူ့အခွင့်အရေး</h4>
         <p>မိမိ၏ အခွင့်အရေးများကို သိထားမှ အနှိမ်ခံရခြင်းမှ ကာကွယ်နိုင်ပါမည်။</p>
         
@@ -402,8 +546,8 @@ const guidesData = {
         </ul>
     `,
 
-    // ၂။ ဓလေ့စရိုက်နှင့် ယဉ်ကျေးမှု
-    culture: `
+  // ၂။ ဓလေ့စရိုက်နှင့် ယဉ်ကျေးမှု
+  culture: `
         <h4>အမေရိကန် ဓလေ့စရိုက်များ (Culture)</h4>
         <p>မြန်မာပြည်နှင့်မတူသော အချက်များကို သိထားလျှင် ပေါင်းသင်းဆက်ဆံရ အဆင်ပြေပါမည်။</p>
         
@@ -436,8 +580,8 @@ const guidesData = {
         </ul>
     `,
 
-    // ၃။ အင်္ဂလိပ်စာ လေ့လာရန်
-    english: `
+  // ၃။ အင်္ဂလိပ်စာ လေ့လာရန်
+  english: `
         <h4>English ဘာသာစကား လေ့လာရန်</h4>
         <p>အလုပ်ကောင်းရရန်နှင့် နေ့စဉ်ဘဝ အဆင်ပြေရန် အင်္ဂလိပ်စာ မဖြစ်မနေ လိုအပ်ပါသည်။</p>
         
@@ -464,22 +608,103 @@ const guidesData = {
             <li><b>TV/Movies:</b> အင်္ဂလိပ်စာတန်းထိုး (English Subtitles) ဖြင့် ကြည့်ပါ။</li>
             <li>အမှားပါမည်ကို မကြောက်ပါနှင့်။ သူတို့က နားလည်ပေးပါသည်။ ပြောမှသာ တိုးတက်ပါမည်။</li>
         </ul>
-    `
+    `,
+  healthcare: `
+        <h4>1. Medicaid (ဝင်ငွေနည်းသူများအတွက်)</h4>
+        <p>အစိုးရမှ ထောက်ပံ့သော အခမဲ့ သို့မဟုတ် တန်ဖိုးနည်း ကျန်းမာရေးအာမခံဖြစ်သည်။</p>
+        <ul>
+            <li><b>ဘယ်သူတွေရနိုင်လဲ:</b> ဝင်ငွေနည်းသော မိသားစုများ၊ ကိုယ်ဝန်ဆောင်များ၊ ကလေးများ၊ မသန်စွမ်းသူများ။</li>
+            <li><b>လျှောက်ရန်:</b> သက်ဆိုင်ရာပြည်နယ်၏ "Health Marketplace" (သို့) "Department of Human Services" တွင် လျှောက်ပါ။</li>
+            <li><b>မှတ်ချက်:</b> ဆေးခန်းပြလျှင် ပိုက်ဆံမကုန်ပါ။</li>
+        </ul>
+
+        <hr>
+        <h4>2. Medicare (သက်ကြီးရွယ်အိုများအတွက်)</h4>
+        <p>အသက် ၆၅ နှစ်နှင့်အထက် လူကြီးများအတွက် Federal အစိုးရ အစီအစဉ်ဖြစ်သည်။</p>
+        <ul>
+            <li>အမေရိကတွင် ၁၀ နှစ်ခန့် အခွန်ဆောင်ထားသူများ ရရှိသည်။</li>
+            <li>မသန်စွမ်းသူ (Disability) များလည်း ရနိုင်သည်။</li>
+        </ul>
+
+        <hr>
+        <h4>3. Private Insurance (အလုပ်မှပေးသော အာမခံ)</h4>
+        <p>ကုမ္ပဏီဝန်ထမ်းများသည် ကုမ္ပဏီမှပေးသော အာမခံကို ယူရလေ့ရှိသည်။ လစာထဲမှ တစ်စိတ်တစ်ပိုင်း ဖြတ်တောက်သည်။</p>
+    `,
+
+  urgent: `
+        <h4>Urgent Care vs Emergency Room (ER)</h4>
+        <p>အမေရိကတွင် ဆေးရုံမှားသွားလျှင် ဒေါ်လာ ထောင်ချီ ကုန်နိုင်သည်။</p>
+
+        <div style="background:#e3f2fd; padding:10px; border-radius:5px; margin-bottom:10px;">
+            <b>🏥 Urgent Care (သာမန် ဆေးခန်း)</b>
+            <ul>
+                <li><b>သွားသင့်သည့်အခြေအနေ:</b> ဖျားနာခြင်း၊ တုပ်ကွေး၊ အသေးစား ဓားရှခြင်း၊ အရိုးအက်ခြင်း၊ ယားနာ၊ ဗိုက်အောင့်ခြင်း။</li>
+                <li><b>ကုန်ကျစရိတ်:</b> သက်သာသည်။ ($100 - $200 ဝန်းကျင်၊ အာမခံရှိရင် ပိုသက်သာ)။</li>
+                <li>Appointment မလိုဘဲ ဝင်ပြနိုင်သည်။</li>
+            </ul>
+        </div>
+
+        <div style="background:#ffebee; padding:10px; border-radius:5px;">
+            <b>🚑 Emergency Room / ER (အရေးပေါ်ဌာန)</b>
+            <ul>
+                <li><b>သွားသင့်သည့်အခြေအနေ:</b> ရင်ဘတ်အောင့်ခြင်း (Heart attack)၊ လေဖြတ်ခြင်း (Stroke)၊ သွေးအလွန်အကျွံထွက်ခြင်း၊ သတိလစ်ခြင်း၊ အသက်ရှုမရခြင်း။</li>
+                <li><b>ကုန်ကျစရိတ်:</b> အလွန်ကြီးသည်။ ($1,000 မှ $10,000 ကျော်ထိ ကျနိုင်သည်)။</li>
+                <li>အသက်အန္တရာယ် စိုးရိမ်ရမှသာ သွားပါ။</li>
+            </ul>
+        </div>
+    `,
+
+  safety: `
+        <h4>၁။ ရဲဌာန (Police Department)</h4>
+        <ul>
+            <li><b>Emergency (911):</b> လူသတ်မှု၊ ဓားပြတိုက်မှု၊ မီးလောင်မှု၊ အသက်အန္တရာယ်ရှိချိန်မှသာ ခေါ်ပါ။ မြန်မာလို စကားပြန်တောင်းဆိုနိုင်သည် ("Burmese Interpreter please" ဟုပြောပါ)။</li>
+            <li><b>Non-Emergency (311):</b> ဆူညံမှု၊ လမ်းပိတ်မှု၊ ခွေးဟောင်သံ အနှောင့်အယှက်များအတွက် 311 ကိုခေါ်ပါ (သို့) Google တွင် "Non-emergency police number near me" ဟုရှာပါ။</li>
+        </ul>
+
+        <h4>၂။ အမျိုးသမီးရေးရာနှင့် အိမ်တွင်းအကြမ်းဖက်မှု</h4>
+        <ul>
+            <li>အိမ်တွင်းအကြမ်းဖက်ခံရပါက (Domestic Violence) ရဲတိုင်ခွင့်ရှိသည်။</li>
+            <li><b>National Hotline:</b> 1-800-799-7233 (၂၄ နာရီ ခေါ်ဆိုနိုင်သည်)။</li>
+            <li>Shelter (ခိုလှုံရာစခန်း) များတွင် အခမဲ့ နေထိုင်စားသောက်ခွင့် ပေးတတ်သည်။</li>
+        </ul>
+
+        <h4>၃။ တောရိုင်းတိရစ္ဆာန် ထိန်းသိမ်းရေး (Animal Control)</h4>
+        <ul>
+            <li>အိမ်ထဲသို့ မြွေ၊ ရက်ကွန်း (Raccoon)၊ တောခွေး ဝင်လာပါက ကိုယ်တိုင်မဖမ်းပါနှင့်။</li>
+            <li>Google တွင် <b>"Animal Control near me"</b> ဟုရှာပြီး ဖုန်းဆက်ပါ။</li>
+            <li>လမ်းဘေးခွေးလေခွေးလွင့် တွေ့လျှင်လည်း တိုင်ကြားနိုင်သည်။</li>
+        </ul>
+    `,
 };
 
 function showGuide(key) {
-    document.getElementById('guideTitle').innerText = key.toUpperCase();
-    document.getElementById('guideContent').innerHTML = guidesData[key];
-    document.getElementById('guideModal').style.display = 'flex';
+  document.getElementById("guideTitle").innerText = key.toUpperCase();
+  document.getElementById("guideContent").innerHTML = guidesData[key];
+  document.getElementById("guideModal").style.display = "flex";
 }
 
 function searchMap(query) {
-    if(navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const {latitude, longitude} = pos.coords;
-            window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}/@${latitude},${longitude},13z`, '_blank');
-        }, () => window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank'));
-    } else {
-        window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank');
-    }
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        window.open(
+          `https://www.google.com/maps/search/${encodeURIComponent(
+            query
+          )}/@${latitude},${longitude},13z`,
+          "_blank"
+        );
+      },
+      () =>
+        window.open(
+          `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
+          "_blank"
+        )
+    );
+  } else {
+    window.open(
+      `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
+      "_blank"
+    );
+  }
 }

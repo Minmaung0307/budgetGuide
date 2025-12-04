@@ -52,88 +52,116 @@
       <div id="contentArea">
         <!-- 1. WALLET TAB -->
         <div id="tab-wallet" class="tab-content active">
-          <!-- (ပြင်ဆင်ချက်) အပေါ်က monthPicker အပိုကို ဖျက်လိုက်ပါပြီ -->
-
-          <!-- Month Picker နှင့် Year View ခလုတ် တွဲလျက် -->
-          <div
-            style="
-              text-align: center;
-              margin-bottom: 10px;
-              display: flex;
-              justify-content: center;
-              gap: 10px;
-            "
-          >
+          <!-- Month & Year Controls -->
+          <div class="date-controls">
             <input
               type="month"
               id="monthPicker"
               onchange="filterDataByMonth()"
-              style="
-                width: auto;
-                padding: 8px;
-                border-radius: 20px;
-                border: 1px solid #ddd;
-              "
             />
-
-            <!-- Yearly Report Button -->
-            <button
-              onclick="openYearModal()"
-              style="
-                padding: 8px 15px;
-                border-radius: 20px;
-                border: 1px solid #2563eb;
-                background: white;
-                color: #2563eb;
-                font-weight: bold;
-              "
-            >
-              <i class="fas fa-calendar-alt"></i> Year View
+            <button onclick="openYearModal()" class="btn-year">
+              <i class="fas fa-calendar-alt"></i> Year
             </button>
           </div>
 
-          <!-- Balance Card -->
-          <div class="balance-card">
-            <small>Net Balance (လက်ကျန်)</small>
-            <h2 id="totalBalance">$0.00</h2>
-            <div class="row">
-              <div class="green">
-                <i class="fas fa-arrow-down"></i> In:
-                <span id="incDisplay">$0</span>
+          <!-- 1. Modern Balance Card -->
+          <div class="wallet-card">
+            <div class="card-header">
+              <span>Total Balance</span>
+              <i class="fas fa-wallet"></i>
+            </div>
+            <h1 id="totalBalance">$0.00</h1>
+            <div class="card-footer">
+              <div class="stat">
+                <span class="arrow-up"
+                  ><i class="fas fa-arrow-down"></i> Income</span
+                >
+                <span id="incDisplay" class="val">$0.00</span>
               </div>
-              <div class="red">
-                <i class="fas fa-arrow-up"></i> Out:
-                <span id="expDisplay">$0</span>
+              <div class="vertical-line"></div>
+              <div class="stat">
+                <span class="arrow-down"
+                  ><i class="fas fa-arrow-up"></i> Expense</span
+                >
+                <span id="expDisplay" class="val">$0.00</span>
               </div>
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="action-row">
-            <button class="act-btn income" onclick="openTransModal('income')">
-              <i class="fas fa-plus-circle"></i> ဝင်ငွေ
-            </button>
-            <button class="act-btn expense" onclick="openTransModal('expense')">
-              <i class="fas fa-minus-circle"></i> ထွက်ငွေ
-            </button>
+          <!-- 2. Budget Health Bar (New Feature) -->
+          <div class="budget-health">
+            <div class="health-label">
+              <span>Monthly Budget Used</span>
+              <span id="budgetPercent">0%</span>
+            </div>
+            <div class="progress-bg">
+              <div
+                id="progressBar"
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+
+            <!-- အရောင် သတ်မှတ်ချက်များ (Legend) -->
+            <div class="budget-legend">
+              <div class="legend-item">
+                <span class="dot-indicator green"></span> < 50% (Good)
+              </div>
+              <div class="legend-item">
+                <span class="dot-indicator orange"></span> 50-80% (Careful)
+              </div>
+              <div class="legend-item">
+                <span class="dot-indicator red"></span> > 80% (Danger)
+              </div>
+            </div>
           </div>
 
-          <!-- Subscriptions List -->
-          <div class="section-header">
-            <h3>🔄 လစဉ်ပေး (Subscriptions)</h3>
-            <button class="btn-small" onclick="openSubModal()">+ New</button>
+          <!-- 3. Action Buttons (Circle Icons) -->
+          <div class="quick-actions">
+            <!-- Income Button -->
+            <div
+              onclick="openTransModal('income')"
+              class="tooltip-btn"
+              data-tooltip="လစာ၊ ဘောနပ်စ်၊ အပိုဝင်ငွေများ ထည့်ရန်"
+            >
+              <div class="circle-btn inc"><i class="fas fa-plus"></i></div>
+              <span>Income</span>
+            </div>
+
+            <!-- Expense Button -->
+            <div
+              onclick="openTransModal('expense')"
+              class="tooltip-btn"
+              data-tooltip="နေ့စဉ် အသုံးစရိတ်များ (မုန့်ဖိုး/ဈေးဖိုး) ထည့်ရန်"
+            >
+              <div class="circle-btn exp"><i class="fas fa-minus"></i></div>
+              <span>Expense</span>
+            </div>
+
+            <!-- Subscription Button -->
+            <div
+              onclick="openSubModal()"
+              class="tooltip-btn"
+              data-tooltip="လစဉ်ပေး စရိတ်များ (အိမ်လခ/ဖုန်းဘေလ်) ထည့်ရန်"
+            >
+              <div class="circle-btn sub"><i class="fas fa-sync"></i></div>
+              <span>Sub</span>
+            </div>
           </div>
-          <div id="subList" class="list-group"></div>
 
-          <!-- Recent Transactions List -->
-          <h3 style="margin-top: 20px">📝 ငွေစာရင်းမှတ်တမ်း</h3>
-          <div
-            id="transList"
-            class="list-group"
-            style="padding-bottom: 20px"
-          ></div>
+          <!-- 4. Subscriptions (Mini Cards) -->
+          <h3 class="section-title">🔄 Subscriptions</h3>
+          <div id="subList" class="horizontal-scroll">
+            <!-- JS will inject items here -->
+          </div>
 
-          <!-- Spacer for scrolling -->
+          <!-- 5. Transactions List (Beautiful List) -->
+          <h3 class="section-title">📝 Recent History</h3>
+          <div id="transList" class="transaction-list">
+            <!-- JS will inject items here -->
+          </div>
+
+          <!-- Spacer -->
           <div style="height: 100px"></div>
         </div>
 
@@ -418,35 +446,120 @@
 
         <!-- 4. CARE TAB -->
         <div id="tab-care" class="tab-content">
-          <h3>❤️ Health & Community</h3>
-          <div class="card">
-            <h4>🏥 ကျန်းမာရေး (Health)</h4>
-            <p>
-              အမေရိကတွင် ကျန်းမာရေးစရိတ်ကြီးမားပါသည်။ အောက်ပါတို့ကို သိထားပါ-
-            </p>
-            <ul>
-              <li><b>Medicaid:</b> ဝင်ငွေနည်းသူများအတွက် အခမဲ့။</li>
-              <li>
-                <b>Urgent Care:</b> အသက်အန္တရာယ်မစိုးရိမ်ရလျှင် ER မသွားဘဲ
-                Urgent Care သွားပါ (ပိုသက်သာသည်)။
-              </li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>🤝 Community Services</h4>
-            <button
-              class="link-btn"
-              onclick="window.open('https://www.findhelp.org','_blank')"
+          <h3>❤️ ကျန်းမာရေးနှင့် လူမှုကူညီရေး</h3>
+
+          <!-- Section 1: Healthcare Info -->
+          <h4 style="margin-top: 15px; color: #555">🏥 ကျန်းမာရေး ဗဟုသုတ</h4>
+          <div class="grid-menu">
+            <!-- 1. Medicaid/Medicare (အနီနု) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('healthcare')"
+              style="background: #ffebee; color: #c62828"
             >
-              🌐 FindHelp.org
-            </button>
-            <button
-              class="link-btn"
-              onclick="window.open('https://www.211.org','_blank')"
+              <div class="g-icon">🩺</div>
+              <div class="g-title">Medicaid &<br />Medicare</div>
+            </div>
+
+            <!-- 2. Urgent Care vs ER (အပြာနု) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('urgent')"
+              style="background: #e3f2fd; color: #1565c0"
             >
-              📞 Call 2-1-1
-            </button>
+              <div class="g-icon">🚑</div>
+              <div class="g-title">Urgent Care<br />vs ER</div>
+            </div>
+
+            <!-- 3. Find Doctor (စိမ်းပြာ) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('hospital clinic')"
+              style="background: #e0f2f1; color: #00695c"
+            >
+              <div class="g-icon">👨‍⚕️</div>
+              <div class="g-title">ဆေးရုံ/ဆေးခန်း<br />ရှာရန်</div>
+            </div>
+
+            <!-- 4. Pharmacy (ခရမ်းနု) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('pharmacy')"
+              style="background: #f3e5f5; color: #6a1b9a"
+            >
+              <div class="g-icon">💊</div>
+              <div class="g-title">ဆေးဆိုင်များ<br />(Pharmacy)</div>
+            </div>
           </div>
+
+          <!-- Section 2: Burmese Community -->
+          <h4 style="margin-top: 20px; color: #555">
+            🙏 မြန်မာ့အသိုင်းအဝိုင်း (Near Me)
+          </h4>
+          <div class="grid-menu">
+            <!-- 5. Monasteries (ရွှေရောင်) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('burmese buddhist monastery')"
+              style="background: #fff8e1; color: #f57f17"
+            >
+              <div class="g-icon">pagoda</div>
+              <div class="g-title">မြန်မာ<br />ဘုန်းကြီးကျောင်း</div>
+            </div>
+
+            <!-- 6. Churches (မိုးပြာ) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('burmese church')"
+              style="background: #e1f5fe; color: #0277bd"
+            >
+              <div class="g-icon">⛪</div>
+              <div class="g-title">မြန်မာ<br />ခရစ်ယာန်ကျောင်း</div>
+            </div>
+
+            <!-- 7. Social Aid (အစိမ်းနု) -->
+            <div
+              class="menu-item"
+              onclick="searchMap('burmese community center')"
+              style="background: #e8f5e9; color: #2e7d32"
+            >
+              <div class="g-icon">🤝</div>
+              <div class="g-title">လူမှုကူညီရေး<br />အသင်းများ</div>
+            </div>
+          </div>
+
+          <!-- Section 3: Safety & Services -->
+          <h4 style="margin-top: 20px; color: #555">
+            🛡️ လုံခြုံရေးနှင့် ဝန်ဆောင်မှု
+          </h4>
+          <div class="grid-menu">
+            <!-- 8. Safety & Rights (မီးခိုး) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('safety')"
+              style="background: #f5f5f5; color: #424242"
+            >
+              <div class="g-icon">👮‍♂️</div>
+              <div class="g-title">ရဲ/အမျိုးသမီး/<br />တိရစ္ဆာန်ဌာန</div>
+            </div>
+
+            <!-- 9. Emergency 911 (အနီရဲရဲ) -->
+            <div
+              class="menu-item"
+              onclick="window.location.href='tel:911'"
+              style="
+                background: #ffcdd2;
+                color: #b71c1c;
+                border: 2px solid #b71c1c;
+              "
+            >
+              <div class="g-icon">🆘</div>
+              <div class="g-title">Emergency<br />Call 911</div>
+            </div>
+          </div>
+
+          <!-- Extra Spacer -->
+          <div style="height: 100px"></div>
         </div>
       </div>
 
