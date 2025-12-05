@@ -47,6 +47,64 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+      // --- PWA INSTALL LOGIC (ROBUST VERSION) ---
+
+      // 1. Event ကို Global Variable ထဲမှာ သိမ်းမယ်
+      window.deferredPrompt = null;
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        // Browser ရဲ့ အလိုအလျောက် Banner ကို တားမယ်
+        e.preventDefault();
+
+        // Event ကို သိမ်းထားမယ် (ခလုတ်နှိပ်မှ ပြန်သုံးမယ်)
+        window.deferredPrompt = e;
+        console.log("✅ Install Event Captured and Saved!");
+
+        // Install ခလုတ်ကို အရောင်ပြောင်းပြီး သိသာအောင်လုပ်မယ် (Optional)
+        const btn = document.querySelector(".install-box button");
+        if (btn) btn.style.color = "#00E676"; // Green
+      });
+
+      async function installApp() {
+        const promptEvent = window.deferredPrompt;
+
+        if (promptEvent) {
+          // 2. သိမ်းထားတဲ့ Event ရှိရင် Install Box ကို ဖော်မယ်
+          promptEvent.prompt();
+
+          // User ရွေးချယ်မှုကို စောင့်မယ်
+          const { outcome } = await promptEvent.userChoice;
+          console.log(`User selected: ${outcome}`);
+
+          // သုံးပြီးရင် variable ကို ပြန်ရှင်းမယ်
+          window.deferredPrompt = null;
+        } else {
+          // 3. Event မရှိရင် (Install ပြီးသား / iOS / Error)
+          alert(
+            "App is already installed or use the Browser Menu (⋮) to install."
+          );
+
+          // Mobile Tooltip
+          const tip = document.querySelector(".install-tip");
+          if (tip) {
+            tip.classList.add("show-mobile");
+            setTimeout(() => tip.classList.remove("show-mobile"), 5000);
+          }
+        }
+      }
+
+      // Service Worker Registration
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./service-worker.js")
+            .then((reg) => console.log("SW Registered"))
+            .catch((err) => console.log("SW Failed", err));
+        });
+      }
+    </script>
   </head>
   <body>
     <!-- Auth Screen -->
@@ -88,10 +146,15 @@
             </div>
           </div>
 
-          <!-- LOGOUT BUTTON -->
-          <button onclick="logout()" class="icon-btn">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
+          <!-- NEW USER PROFILE & LOGOUT -->
+          <div class="header-profile" onclick="logout()" title="Logout">
+            <img id="headerUserPhoto" src="" alt="User" />
+            <span id="headerUserName">User</span>
+            <i
+              class="fas fa-sign-out-alt"
+              style="margin-left: 5px; font-size: 12px; opacity: 0.8"
+            ></i>
+          </div>
         </div>
       </header>
 
@@ -205,6 +268,11 @@
           <h3 class="section-title">📝 Recent History</h3>
           <div id="transList" class="transaction-list">
             <!-- JS will inject items here -->
+          </div>
+
+          <!-- ဒီနေရာမှာ Footer ထည့်ပါ -->
+          <div class="app-footer">
+            @Powered by MM, <span id="currentYear"></span>
           </div>
 
           <!-- Spacer -->

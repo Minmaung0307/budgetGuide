@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "budgetguide"
-  }
+    "default": "uslife-mm"
+  },
+  "targets": {},
+  "etags": {}
 }

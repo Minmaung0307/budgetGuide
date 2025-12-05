@@ -700,3 +700,63 @@ button.primary {
     color: white;
     transform: scale(1.1);
 }
+
+/* --- HEADER USER PROFILE --- */
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2); /* အကြည်ရောင် နောက်ခံ */
+    padding: 5px 12px 5px 5px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.header-profile:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.header-profile img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
+}
+
+.header-profile span {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    max-width: 100px; /* နာမည်ရှည်ရင် နေရာမစားအောင် */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Mobile Responsive: ဖုန်းသေးရင် နာမည်ဖျောက်ပြီး ပုံပဲပြမယ် */
+@media (max-width: 400px) {
+    .header-profile span {
+        display: none;
+    }
+    .header-profile {
+        padding: 5px; /* စာမပါတော့ ပိုကျဉ်းမယ် */
+        border-radius: 50%;
+    }
+    .header-profile i {
+        display: none; /* Icon ပါ ဖျောက်မယ် */
+    }
+}
+
+/* --- APP FOOTER --- */
+.app-footer {
+    text-align: center;
+    padding: 20px;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    width: 100%;
+}

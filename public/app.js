@@ -1,12 +1,12 @@
 // --- FIREBASE CONFIG (REPLACE YOURS) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyB2ifrMAX8E0xzyEDxUDqeeCB7lTWTDpM8",
-  authDomain: "budgetguide.firebaseapp.com",
-  projectId: "budgetguide",
-  storageBucket: "budgetguide.firebasestorage.app",
-  messagingSenderId: "840243615240",
-  appId: "1:840243615240:web:12cffb4a5bbf46ea48e3bd",
-  measurementId: "G-1CXX2EJJMF",
+  apiKey: "AIzaSyAR585ISkkdacPyJsTy_vtkfRnFUFT80Iw",
+  authDomain: "uslife-mm.firebaseapp.com",
+  projectId: "uslife-mm",
+  storageBucket: "uslife-mm.firebasestorage.app",
+  messagingSenderId: "780321403782",
+  appId: "1:780321403782:web:157a1b619d9edf8877b207",
+  measurementId: "G-3MZNCBRDE4",
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -43,22 +43,30 @@ auth.onAuthStateChanged((user) => {
 
         if (doc.exists) {
           // (က) ခွင့်ပြုထားသူ ဖြစ်လျှင် -> App ကို ဖွင့်ပေးမယ်
+          // Whitelist စစ်ပြီးလို့ OK ပြီဆိုရင် ဒီကုဒ်တွေ အလုပ်လုပ်ပါမယ်:
           currentUser = user;
           document.getElementById("authScreen").classList.remove("active");
           document.getElementById("appScreen").classList.add("active");
 
-          // Set Month & Load Data
+          // *** NEW: Update Header Profile ***
+          const photoEl = document.getElementById("headerUserPhoto");
+          const nameEl = document.getElementById("headerUserName");
+
+          if (photoEl)
+            photoEl.src = user.photoURL || "https://via.placeholder.com/40"; // ဓာတ်ပုံမရှိရင် အစားထိုးပုံ
+          if (nameEl) nameEl.textContent = user.displayName.split(" ")[0]; // နာမည်ရှေ့ဆုံးတစ်လုံးပဲ ယူမယ် (နေရာဆံ့အောင်)
+
+          // Load Data ...
           document.getElementById("monthPicker").value = currentMonth;
           loadData();
           filterDataByMonth();
+
+          // ...
         } else {
-          // (ခ) ခွင့်မပြုထားသူ ဖြစ်လျှင် -> သတိပေးပြီး Logout လုပ်မယ်
-          alert(
-            "Access Denied!\nAdmin ခွင့်ပြုချက်မရသေးပါ။\n(Email: " +
-              userEmail +
-              ")"
-          );
-          auth.signOut(); // ချက်ချင်း ပြန်ထွက်
+          // Logout ဖြစ်သွားရင်
+          document.getElementById("authScreen").classList.add("active");
+          document.getElementById("appScreen").classList.remove("active");
+          currentUser = null;
         }
       })
       .catch((error) => {
@@ -499,15 +507,15 @@ const guidesData = {
         <h4>1. Social Security Number (SSN)</h4>
         <p>SSN မရှိလျှင် အမေရိကမှာ အလုပ်လုပ်လို့မရ၊ ဘဏ်ဖွင့်မရ၊ Credit ဆောက်မရပါ။ ရောက်ပြီး ၁၀ ရက်လောက်နေရင် သွားလုပ်လို့ရပါပြီ။</p>
         <ul>
-            <li><b>လိုအပ်သောစာရွက်များ:</b> Passport, I-94 (အွန်လိုင်းမှ print ထုတ်ပါ), Visa။</li>
-            <li><b>နေရာ:</b> Google Maps တွင် "Social Security Administration Office" ဟုရှာပြီး နီးစပ်ရာသွားပါ။</li>
+            <li><b>လိုအပ်သောစာရွက်များ:</b> Passport, I-94 (အွန်လိုင်းမှ print ထုတ်ပါ - <a href="https://i94.cbp.dhs.gov/I94/#/home" target="_blank">I-94 Website</a>), Visa။</li>
+            <li><b>နေရာ:</b> Google Maps တွင် "Social Security Administration Office" ဟုရှာပြီး နီးစပ်ရာသွားပါ။ (<a href="https://secure.ssa.gov/ICON/main.jsp" target="_blank">Office Locator</a>)</li>
             <li>စာတိုက်မှ ကဒ်ရောက်လာရန် ၂ ပတ်ခန့် ကြာတတ်သည်။</li>
         </ul>
         
         <h4>2. State ID / Driver License</h4>
         <p>Passport ကို နေ့တိုင်းမကိုင်ပါနှင့်။ ပျောက်လျှင် ဒုက္ခများပါမည်။ ထို့ကြောင့် State ID လုပ်ထားပါ။</p>
         <ul>
-            <li><b>နေရာ:</b> DMV (Department of Motor Vehicles) သို့မဟုတ် BMV ရုံး။</li>
+            <li><b>နေရာ:</b> DMV (Department of Motor Vehicles) သို့မဟုတ် BMV ရုံး။ Google Maps တွင် "DMV near me" ဟုရှာပါ။</li>
             <li><b>လိုအပ်ချက်:</b> "6 Points ID" စနစ်သုံးလေ့ရှိသည်။ (Passport, SSN Card, I-94) + အိမ်လိပ်စာပါသော စာရွက် ၂ ခု (ဥပမာ- ဘဏ်စာရွက်၊ အိမ်ငှားစာချုပ်)။</li>
         </ul>
     `,
@@ -517,7 +525,7 @@ const guidesData = {
         
         <b>အဆင့် ၁: စာမေးပွဲ (Knowledge Test)</b>
         <ul>
-            <li>သက်ဆိုင်ရာ ပြည်နယ် DMV ဝက်ဘ်ဆိုက်တွင် Driver's Manual စာအုပ်ကို ဒေါင်းလုဒ်ဆွဲပြီး ဖတ်ပါ။</li>
+            <li>သက်ဆိုင်ရာ ပြည်နယ် DMV ဝက်ဘ်ဆိုက်တွင် Driver's Manual စာအုပ်ကို ဒေါင်းလုဒ်ဆွဲပြီး ဖတ်ပါ။ (<a href="https://www.dmv.org/driver-handbooks.php" target="_blank">Driver's Handbooks by State</a>)</li>
             <li>အမှတ်အသားများ (Signs) နှင့် စည်းကမ်းများကို ဖြေဆိုရမည်။</li>
             <li>ကွန်ပျူတာဖြင့်ဖြေရပြီး ချက်ချင်းအဖြေသိရသည်။ (တချို့ပြည်နယ်တွင် မြန်မာဘာသာဖြင့် ဖြေဆိုခွင့်ရှိသည်)။</li>
         </ul>
@@ -539,17 +547,18 @@ const guidesData = {
         <h4>အိမ်ငှားခြင်း (Renting)</h4>
         <p>အမေရိကမှာ အိမ်ငှားရတာ မလွယ်ကူပါ။ အောက်ပါအချက်များ ပြင်ဆင်ထားပါ:</p>
         <ul>
-            <li><b>Credit Score:</b> 650 အထက်ရှိမှ အိမ်ရှင်တွေ ကြိုက်သည်။ အသစ်ရောက်သူများ Credit မရှိသေးလျှင် (Co-signer) အာမခံသူ ရှာရတတ်သည်။</li>
+            <li><b>Credit Score:</b> 650 အထက်ရှိမှ အိမ်ရှင်တွေ ကြိုက်သည်။ အသစ်ရောက်သူများ Credit မရှိသေးလျှင် (Co-signer) အာမခံသူ ရှာရတတ်သည်။ (<a href="https://www.creditkarma.com/" target="_blank">Check Credit Score Free</a>)</li>
             <li><b>Proof of Income:</b> လစာသည် အိမ်လခ၏ ၃ ဆ ရှိကြောင်း ပြရမည် (Paystubs ပြရသည်)။</li>
             <li><b>Deposit:</b> ပုံမှန်အားဖြင့် ၁ လစာ စပေါ်ငွေ တင်ရသည်။</li>
             <li><b>Lease Agreement:</b> စာချုပ်ကို သေချာဖတ်ပါ။ စာချုပ်မပြည့်ခင် ထွက်လျှင် ဒဏ်ကြေးဆောင်ရသည်။</li>
+            <li><b>အိမ်ရှာရန် Websites:</b> <a href="https://www.zillow.com/" target="_blank">Zillow</a>, <a href="https://www.apartments.com/" target="_blank">Apartments.com</a>, <a href="https://www.trulia.com/" target="_blank">Trulia</a></li>
         </ul>
 
         <h4>အိမ်ဝယ်ခြင်း (Buying)</h4>
         <ul>
             <li><b>Downpayment:</b> အိမ်တန်ဖိုး၏ 3% မှ 20% လက်ငင်းပေးရသည်။ (20% ပေးလျှင် လစဉ်ကြေး သက်သာသည်)။</li>
             <li><b>Closing Cost:</b> အိမ်ဝယ်စရိတ် (ရှေ့နေခ၊ စစ်ဆေးခ) သည် အိမ်တန်ဖိုး၏ 2-5% ထပ်ကုန်နိုင်သည်။</li>
-            <li><b>Realtor:</b> ဝယ်သူဘက်မှ အိမ်ပွဲစားခ ပေးစရာမလိုပါ။ (ရောင်းသူက ပေးရသည်)။ ထို့ကြောင့် Realtor ခေါ်ပြီး ဝယ်တာ ပိုစိတ်ချရသည်။</li>
+            <li><b>Realtor:</b> ဝယ်သူဘက်မှ အိမ်ပွဲစားခ ပေးစရာမလိုပါ။ (ရောင်းသူက ပေးရသည်)။ ထို့ကြောင့် Realtor ခေါ်ပြီး ဝယ်တာ ပိုစိတ်ချရသည်။ (<a href="https://www.realtor.com/" target="_blank">Find a Realtor</a>)</li>
         </ul>
     `,
   car: `
@@ -560,18 +569,21 @@ const guidesData = {
         <ul>
             <li><b>အားသာချက်:</b> စာရွက်စာတမ်း အရှုပ်အရှင်းကင်းသည်။ အာမခံ (Warranty) ပါတတ်သည်။</li>
             <li><b>အားနည်းချက်:</b> ဈေးကြီးသည်။ Dealer Fee တွေ ပေါင်းထည့်တတ်သည်။</li>
+            <li><b>ရှာရန်:</b> <a href="https://www.cars.com/" target="_blank">Cars.com</a>, <a href="https://www.autotrader.com/" target="_blank">Autotrader</a></li>
         </ul>
 
         <b>၂။ Private Seller (Facebook Marketplace)</b>
         <ul>
             <li><b>အားသာချက်:</b> ဈေးသက်သာသည်။ ညှိနှိုင်းရလွယ်သည်။</li>
             <li><b>သတိပြုရန်:</b> ကားအင်ဂျင်မကောင်းလျှင် ပြန်ပြောဖို့ခက်သည်။ ကားဝပ်ရှော့ကျွမ်းကျင်သူနှင့် ပြပြီးမှ ဝယ်ပါ။ "Title" (ကားပိုင်ဆိုင်မှုစာရွက်) ရှင်းမရှင်း သေချာကြည့်ပါ။ Salvage Title (ကားပျက်ပြီး ပြန်ပြင်ထားသောကား) ဖြစ်နေလျှင် မဝယ်ပါနှင့်။</li>
+            <li><b>Car History စစ်ရန်:</b> <a href="https://www.carfax.com/" target="_blank">Carfax</a> (VIN နံပါတ်ဖြင့် စစ်ပါ)</li>
         </ul>
 
         <b>၃။ အာမခံ (Car Insurance)</b>
         <ul>
             <li>ကားဝယ်ပြီးတာနဲ့ မောင်းမထွက်ခင် Insurance ချက်ချင်းဝယ်ရပါမယ်။ မပါရင် ရဲဖမ်းခံရနိုင်ပါသည်။</li>
             <li>Liability (သူများကို လျော်ပေးတာ) နဲ့ Full Coverage (ကိုယ့်ကားပါ လျော်ပေးတာ) ၂ မျိုးရှိသည်။</li>
+            <li><b>Insurance ရှာရန်:</b> <a href="https://www.geico.com/" target="_blank">Geico</a>, <a href="https://www.progressive.com/" target="_blank">Progressive</a>, <a href="https://www.statefarm.com/" target="_blank">State Farm</a></li>
         </ul>
     `,
   jobs: `
@@ -591,22 +603,22 @@ const guidesData = {
         <ul>
             <li><b>ရှာနည်း:</b> ဆိုင်တံခါးတွင် "Now Hiring" သို့မဟုတ် "Help Wanted" စာကပ်ထားလျှင် ချက်ချင်းဝင်မေးပါ။ Manager နှင့် တွေ့ခွင့်တောင်းပါ။</li>
             <li><b>Sushi/Asian Food:</b> မြန်မာ သို့မဟုတ် အာရှဆိုင်များတွင် အတွေ့အကြုံမရှိလည်း ခန့်လေ့ရှိသည်။ Facebook မြန်မာဂရုများတွင် ရှာပါ။</li>
-            <li><b>Walmart/Target:</b> သူတို့၏ Website (Careers page) တွင် Online လျှောက်ရသည်။</li>
+            <li><b>Walmart/Target:</b> သူတို့၏ Website (Careers page) တွင် Online လျှောက်ရသည်။ (<a href="https://careers.walmart.com/" target="_blank">Walmart Careers</a>, <a href="https://jobs.target.com/" target="_blank">Target Jobs</a>)</li>
         </ul>
 
         <hr>
         <b>၃။ Software / IT / Engineer Jobs</b>
         <ul>
-            <li><b>အဓိကနေရာ:</b> LinkedIn သည် အရေးကြီးဆုံးဖြစ်သည်။ Profile ကို သေသေချာချာ ပြင်ဆင်ထားပါ။</li>
-            <li><b>ရှာဖွေရန် Website များ:</b> LinkedIn, Indeed, Glassdoor, Dice (IT only).</li>
-            <li><b>ပြင်ဆင်ရန်:</b> Resume (ကိုယ်ရေးရာဇဝင်) ကို အမေရိကန်စတိုင်ဖြင့် ပြင်ဆင်ပါ။ Tech Interview များအတွက် LeetCode ကဲ့သို့သော website များတွင် လေ့ကျင့်ပါ။</li>
+            <li><b>အဓိကနေရာ:</b> LinkedIn သည် အရေးကြီးဆုံးဖြစ်သည်။ Profile ကို သေသေချာချာ ပြင်ဆင်ထားပါ။ (<a href="https://www.linkedin.com/" target="_blank">LinkedIn</a>)</li>
+            <li><b>ရှာဖွေရန် Website များ:</b> <a href="https://www.indeed.com/" target="_blank">Indeed</a>, <a href="https://www.glassdoor.com/" target="_blank">Glassdoor</a>, <a href="https://www.dice.com/" target="_blank">Dice (IT only)</a>.</li>
+            <li><b>ပြင်ဆင်ရန်:</b> Resume (ကိုယ်ရေးရာဇဝင်) ကို အမေရိကန်စတိုင်ဖြင့် ပြင်ဆင်ပါ။ Tech Interview များအတွက် <a href="https://leetcode.com/" target="_blank">LeetCode</a> ကဲ့သို့သော website များတွင် လေ့ကျင့်ပါ။</li>
             <li><b>Networking:</b> သူငယ်ချင်းမိတ်ဆွေများ၏ ကုမ္ပဏီတွင် Referral ပေးခိုင်းခြင်းက အလုပ်ရရန် အလွယ်ဆုံးလမ်းဖြစ်သည်။</li>
         </ul>
 
         <hr>
         <b>၄။ အထွေထွေ အကြံပြုချက်များ</b>
         <ul>
-            <li><b>Resume:</b> မည်သည့်အလုပ်လျှောက်လျှောက် Resume တစ်စောင် လိုအပ်သည်။ ရိုးရှင်းပြီး ရှင်းလင်းအောင် ရေးပါ။</li>
+            <li><b>Resume:</b> မည်သည့်အလုပ်လျှောက်လျှောက် Resume တစ်စောင် လိုအပ်သည်။ ရိုးရှင်းပြီး ရှင်းလင်းအောင် ရေးပါ။ (<a href="https://www.canva.com/resumes/templates/" target="_blank">Resume Templates</a>)</li>
             <li><b>Interview:</b> အချိန်တိကျပါ (၅ မိနစ် ကြိုရောက်ပါ)။ သေသပ်စွာ ဝတ်စားပါ။</li>
             <li><b>Tax:</b> W2 (ကုမ္ပဏီဝန်ထမ်း) သို့မဟုတ် 1099 (Contractor) ခွဲခြားသိထားပါ။</li>
         </ul>
@@ -615,9 +627,9 @@ const guidesData = {
         <h4>Citizenship (နိုင်ငံသားလျှောက်ခြင်း)</h4>
         <p>Green Card ရပြီး ၅ နှစ်ပြည့်လျှင် (သို့မဟုတ်) အမေရိကန်နိုင်ငံသားနှင့် လက်ထပ်ပြီး Green Card ရသူဖြစ်လျှင် ၃ နှစ်ပြည့်ပါက နိုင်ငံသားလျှောက်ခွင့်ရှိသည်။</p>
         <ul>
-            <li><b>Form:</b> N-400 ဖောင်တင်ရမည်။</li>
+            <li><b>Form:</b> N-400 ဖောင်တင်ရမည်။ (<a href="https://www.uscis.gov/n-400" target="_blank">N-400 Form</a>)</li>
             <li><b>English Test:</b> အခြေခံ အင်္ဂလိပ်စာ ဖတ်ခြင်း၊ ရေးခြင်း စစ်ဆေးသည်။</li>
-            <li><b>Civics Test:</b> အမေရိကန် သမိုင်းနှင့် ဥပဒေဆိုင်ရာ မေးခွန်း ၁၀၀ ထဲမှ ၁၀ ခုမေးမည်။ ၆ ခုမှန်လျှင် အောင်သည်။</li>
+            <li><b>Civics Test:</b> အမေရိကန် သမိုင်းနှင့် ဥပဒေဆိုင်ရာ မေးခွန်း ၁၀၀ ထဲမှ ၁၀ ခုမေးမည်။ ၆ ခုမှန်လျှင် အောင်သည်။ (<a href="https://www.uscis.gov/citizenship/find-study-materials-and-resources/study-for-the-test" target="_blank">Study Materials</a>)</li>
             <li>အင်တာဗျူးအောင်ပြီးလျှင် "သစ္စာဆိုပွဲ (Oath Ceremony)" တက်ရောက်ပြီးမှ နိုင်ငံသားလက်မှတ် ရရှိမည်။</li>
         </ul>
     `,
@@ -625,13 +637,12 @@ const guidesData = {
         <h4>Food Stamps (SNAP)</h4>
         <p>ဝင်ငွေနည်းပါးသော မိသားစုများအတွက် အစိုးရမှ အစားအသောက်ဝယ်ရန် ထောက်ပံ့သော ကဒ် (EBT Card) ဖြစ်သည်။</p>
         <ul>
-            <li><b>လျှောက်ရန်:</b> သက်ဆိုင်ရာပြည်နယ်၏ "Department of Human Services" ရုံးသို့ သွားရောက်လျှောက်ထားပါ။</li>
+            <li><b>လျှောက်ရန်:</b> သက်ဆိုင်ရာပြည်နယ်၏ "Department of Human Services" ရုံးသို့ သွားရောက်လျှောက်ထားပါ။ (<a href="https://www.fns.usda.gov/snap/state-directory" target="_blank">Find Your State's Program</a>)</li>
             <li><b>လိုအပ်ချက်:</b> ဝင်ငွေနည်းကြောင်း အထောက်အထား (Paystub), ဘဏ်စာရင်း, အိမ်လခစာချုပ်, ID, SSN။</li>
             <li><b>သုံးစွဲခြင်း:</b> Walmart, Costco အပါအဝင် ဆိုင်တော်တော်များများတွင် အစားအသောက် (ချက်ပြုတ်စားသောက်ရသော ပစ္စည်းများ) သာ ဝယ်ယူခွင့်ရှိသည်။ အရက်၊ ဆေးလိပ်၊ တစ်ရှူး၊ ဆပ်ပြာ ဝယ်မရပါ။</li>
             <li><b>သတိပြုရန်:</b> လိမ်လည်လျှောက်ထားခြင်း မပြုရ။ နောင်တွင် Immigration ကိစ္စများ၌ ပြဿနာရှိနိုင်သည်။</li>
         </ul>
     `,
-  // ၁။ လူ့အခွင့်အရေးနှင့် ဥပဒေ
   rights: `
         <h4>အမေရိကန် ဥပဒေနှင့် လူ့အခွင့်အရေး</h4>
         <p>မိမိ၏ အခွင့်အရေးများကို သိထားမှ အနှိမ်ခံရခြင်းမှ ကာကွယ်နိုင်ပါမည်။</p>
@@ -639,9 +650,9 @@ const guidesData = {
         <hr>
         <b>၁။ လုပ်ငန်းခွင် အခွင့်အရေး</b>
         <ul>
-            <li><b>Minimum Wage:</b> ပြည်နယ်အလိုက် သတ်မှတ်ထားသော အနိမ့်ဆုံးလုပ်ခ (ဥပမာ- တစ်နာရီ $10-$16) ရရှိရမည်။</li>
+            <li><b>Minimum Wage:</b> ပြည်နယ်အလိုက် သတ်မှတ်ထားသော အနိမ့်ဆုံးလုပ်ခ (ဥပမာ- တစ်နာရီ $10-$16) ရရှိရမည်။ (<a href="https://www.dol.gov/agencies/whd/minimum-wage/state" target="_blank">State Minimum Wages</a>)</li>
             <li><b>Overtime:</b> တစ်ပတ်လျှင် ၄၀ နာရီထက်ပိုလုပ်ပါက ပိုသောနာရီများအတွက် ၁.၅ ဆ (Time and a half) ရရှိရမည်။</li>
-            <li><b>ခွဲခြားဆက်ဆံမှု:</b> လူမျိုး၊ ဘာသာ၊ အသားအရောင်၊ ကျား/မ ပေါ်မူတည်၍ ခွဲခြားဆက်ဆံခံရပါက တိုင်ကြားခွင့်ရှိသည်။</li>
+            <li><b>ခွဲခြားဆက်ဆံမှု:</b> လူမျိုး၊ ဘာသာ၊ အသားအရောင်၊ ကျား/မ ပေါ်မူတည်၍ ခွဲခြားဆက်ဆံခံရပါက တိုင်ကြားခွင့်ရှိသည်။ (<a href="https://www.eeoc.gov/" target="_blank">EEOC Website</a>)</li>
         </ul>
 
         <hr>
@@ -649,17 +660,16 @@ const guidesData = {
         <ul>
             <li>ရဲတားပါက လက်ကိုမြင်သာအောင်ထားပါ။ ရုတ်တရက် လှုပ်ရှားခြင်းမပြုပါနှင့်။</li>
             <li><b>အရေးကြီးသည်:</b> ရဲကို လာဘ်ထိုးရန် (ပိုက်ဆံပေးရန်) လုံးဝ မကြိုးစားပါနှင့်။ ချက်ချင်း အဖမ်းခံရပါလိမ့်မည်။</li>
-            <li>မေးခွန်းမဖြေလိုပါက ရှေ့နေနှင့်မှ ပြောမည်ဟု ငြင်းဆိုခွင့် (Right to remain silent) ရှိသည်။</li>
+            <li>မေးခွန်းမဖြေလိုပါက ရှေ့နေနှင့်မှ ပြောမည်ဟု ငြင်းဆိုခွင့် (Right to remain silent) ရှိသည်။ (<a href="https://www.aclu.org/know-your-rights/stopped-by-police" target="_blank">Know Your Rights</a>)</li>
         </ul>
 
         <hr>
         <b>၃။ အိမ်တွင်းအကြမ်းဖက်မှု (Domestic Violence)</b>
         <ul>
             <li>ဇနီးမောင်နှံ၊ သားသမီး ရိုက်နှက်ခြင်းသည် ကြီးလေးသော ရာဇဝတ်မှုဖြစ်သည်။ အိမ်နီးချင်းများက 911 ခေါ်တတ်သည်။</li>
+            <li>အကူအညီလိုပါက National Domestic Violence Hotline: 1-800-799-7233 သို့ ခေါ်ဆိုပါ။ (<a href="https://www.thehotline.org/" target="_blank">The Hotline</a>)</li>
         </ul>
     `,
-
-  // ၂။ ဓလေ့စရိုက်နှင့် ယဉ်ကျေးမှု
   culture: `
         <h4>အမေရိကန် ဓလေ့စရိုက်များ (Culture)</h4>
         <p>မြန်မာပြည်နှင့်မတူသော အချက်များကို သိထားလျှင် ပေါင်းသင်းဆက်ဆံရ အဆင်ပြေပါမည်။</p>
@@ -692,8 +702,6 @@ const guidesData = {
             <li>ချိန်းထားသောအချိန်ထက် ၅ မိနစ်ခန့် စောရောက်ခြင်းသည် အကောင်းဆုံးဖြစ်သည်။ နောက်ကျခြင်းကို မကြိုက်ကြပါ။</li>
         </ul>
     `,
-
-  // ၃။ အင်္ဂလိပ်စာ လေ့လာရန်
   english: `
         <h4>English ဘာသာစကား လေ့လာရန်</h4>
         <p>အလုပ်ကောင်းရရန်နှင့် နေ့စဉ်ဘဝ အဆင်ပြေရန် အင်္ဂလိပ်စာ မဖြစ်မနေ လိုအပ်ပါသည်။</p>
@@ -709,15 +717,15 @@ const guidesData = {
         <hr>
         <b>၂။ အသုံးဝင်သော Apps များ</b>
         <ul>
-            <li><b>Duolingo:</b> အခြေခံကစပြီး ဂိမ်းကစားသလို လေ့လာနိုင်သည်။</li>
-            <li><b>YouTube:</b> "English with Lucy", "BBC Learning English" တို့ကို ကြည့်ပါ။</li>
+            <li><b>Duolingo:</b> အခြေခံကစပြီး ဂိမ်းကစားသလို လေ့လာနိုင်သည်။ (<a href="https://www.duolingo.com/" target="_blank">Duolingo</a>)</li>
+            <li><b>YouTube:</b> "English with Lucy", "BBC Learning English" တို့ကို ကြည့်ပါ။ (<a href="https://www.youtube.com/user/bbclearningenglish" target="_blank">BBC Learning English</a>)</li>
             <li><b>Google Translate:</b> စကားပြောလျှင် အသံဖလှယ်ပေးသည့် Conversation Mode သည် အလွန်အသုံးဝင်သည်။</li>
         </ul>
 
         <hr>
         <b>၃။ လေ့ကျင့်ရန် နည်းလမ်းများ</b>
         <ul>
-            <li><b>Volunteer:</b> ပရဟိတ (Food bank, Church) များတွင် လုပ်အားပေးရင်း စကားပြောလေ့ကျင့်ပါ။</li>
+            <li><b>Volunteer:</b> ပရဟိတ (Food bank, Church) များတွင် လုပ်အားပေးရင်း စကားပြောလေ့ကျင့်ပါ။ (<a href="https://www.volunteermatch.org/" target="_blank">Find Volunteer Opportunities</a>)</li>
             <li><b>TV/Movies:</b> အင်္ဂလိပ်စာတန်းထိုး (English Subtitles) ဖြင့် ကြည့်ပါ။</li>
             <li>အမှားပါမည်ကို မကြောက်ပါနှင့်။ သူတို့က နားလည်ပေးပါသည်။ ပြောမှသာ တိုးတက်ပါမည်။</li>
         </ul>
@@ -729,7 +737,7 @@ const guidesData = {
         <hr>
         <b>၁။ ကျောင်းအပ်နှံခြင်း (Enrollment)</b>
         <ul>
-            <li><b>School District:</b> မိမိနေထိုင်ရာ မြို့နယ် (Zip code) ပေါ်မူတည်ပြီး တက်ရမည့်ကျောင်း သတ်မှတ်ထားသည်။ တခြားမြို့နယ် သွားတက်၍မရပါ။</li>
+            <li><b>School District:</b> မိမိနေထိုင်ရာ မြို့နယ် (Zip code) ပေါ်မူတည်ပြီး တက်ရမည့်ကျောင်း သတ်မှတ်ထားသည်။ တခြားမြို့နယ် သွားတက်၍မရပါ။ (<a href="https://nces.ed.gov/ccd/schoolsearch/" target="_blank">Search for Schools</a>)</li>
             <li><b>လိုအပ်သောစာရွက်များ:</b>
                 <ul>
                     <li>ငှားရမ်းစာချုပ် (Lease Agreement) သို့မဟုတ် ရေမီးဘေလ် (လိပ်စာအတည်ပြုရန်)။</li>
@@ -750,10 +758,9 @@ const guidesData = {
         <ul>
             <li><b>ESL (English as Second Language):</b> အင်္ဂလိပ်စကား မကျွမ်းကျင်သော ကလေးများအတွက် သီးသန့် အတန်းများရှိသည်။ အခမဲ့ဖြစ်သည်။</li>
             <li><b>School Bus:</b> ကျောင်းနှင့် အိမ်ဝေးလျှင် အဝါရောင်ကျောင်းကား အခမဲ့ စီးနိုင်သည်။</li>
-            <li><b>Lunch:</b> ဝင်ငွေနည်းပါးလျှင် ကျောင်းတွင် အခမဲ့ (သို့) သက်သာသောနှုန်းဖြင့် နေ့လည်စာ လျှောက်ထားနိုင်သည်။</li>
+            <li><b>Lunch:</b> ဝင်ငွေနည်းပါးလျှင် ကျောင်းတွင် အခမဲ့ (သို့) သက်သာသောနှုန်းဖြင့် နေ့လည်စာ လျှောက်ထားနိုင်သည်။ (<a href="https://www.fns.usda.gov/cn/school-meals-global" target="_blank">School Meals Program</a>)</li>
         </ul>
     `,
-
   parenting: `
         <h4>👨‍👩‍👧‍👦 မိသားစု၊ ယဉ်ကျေးမှုနှင့် Culture Shock</h4>
         
@@ -786,7 +793,7 @@ const guidesData = {
     `,
   tax_info: `
         <h4>🇺🇸 အခွန်စနစ် (Tax System)</h4>
-        <p>အမေရိကတွင် ဧပြီလ ၁၅ ရက်နေ့သည် Tax Day ဖြစ်သည်။ အခွန်ဆောင်ခြင်းသည် ဥပဒေဖြစ်သည်။</p>
+        <p>အမေရိကတွင် ဧပြီလ ၁၅ ရက်နေ့သည် Tax Day ဖြစ်သည်။ အခွန်ဆောင်ခြင်းသည် ဥပဒေဖြစ်သည်။ (<a href="https://www.irs.gov/" target="_blank">IRS Website</a>)</p>
         
         <hr>
         <b>၁။ W2 နှင့် 1099 ကွာခြားချက်</b>
@@ -799,11 +806,10 @@ const guidesData = {
         <b>၂။ Tax Refund (အခွန်ပြန်ရခြင်း)</b>
         <ul>
             <li>အစိုးရက သတ်မှတ်ထားသည်ထက် ပိုဆောင်မိလျှင် ပြန်အမ်းငွေ ရတတ်သည်။</li>
-            <li><b>Child Tax Credit:</b> ၁၇ နှစ်အောက် ကလေးရှိလျှင် တစ်ယောက်ကို $2,000 ခန့် အခွန်သက်သာခွင့် (သို့) ငွေပြန်ရနိုင်သည်။</li>
+            <li><b>Child Tax Credit:</b> ၁၇ နှစ်အောက် ကလေးရှိလျှင် တစ်ယောက်ကို $2,000 ခန့် အခွန်သက်သာခွင့် (သို့) ငွေပြန်ရနိုင်သည်။ (<a href="https://www.irs.gov/credits-deductions/individuals/child-tax-credit" target="_blank">Learn More</a>)</li>
             <li><b>EITC:</b> ဝင်ငွေနည်းပါးသူများအတွက် အစိုးရမှ ထောက်ပံ့သော အခွန်အမ်းငွေဖြစ်သည်။</li>
         </ul>
     `,
-
   insurance_all: `
         <h4>🛡️ အာမခံ (Insurance) လက်စွဲ</h4>
         <p>အမေရိကတွင် "မဖြစ်မနေထားရမည့်အရာ" ဖြစ်သည်။ မရှိလျှင် ဒေဝါလီခံရနိုင်သည်။</p>
@@ -829,7 +835,6 @@ const guidesData = {
             <li><b>အိမ်ကိစ္စ:</b> ပျက်စီးသွားသော ပစ္စည်းများကို ဓာတ်ပုံရိုက်ပြီး စာရင်းလုပ်ထားပါ။</li>
         </ul>
     `,
-
   retirement: `
         <h4>👴👵 အိုမင်းရေးရာနှင့် ပင်စင် (Retirement)</h4>
         <p>အမေရိကတွင် သားသမီးက ပြန်ကျွေးမွေးသော ဓလေ့နည်းပါးသဖြင့် ကိုယ့်အားကိုယ်ကိုးရန် ပြင်ဆင်ရမည်။</p>
@@ -837,7 +842,7 @@ const guidesData = {
         <b>၁။ Social Security (အစိုးရပင်စင်)</b>
         <ul>
             <li>အလုပ်လုပ်ပြီး အခွန်ဆောင်ခဲ့သူများ အသက် ၆၂ နှစ် (သို့) ၆၇ နှစ်တွင် စတင်ခံစားခွင့်ရှိသည်။</li>
-            <li>၁၀ နှစ် (Credit 40) ပြည့်အောင် အခွန်ဆောင်ထားမှ ရရှိမည်။</li>
+            <li>၁၀ နှစ် (Credit 40) ပြည့်အောင် အခွန်ဆောင်ထားမှ ရရှိမည်။ (<a href="https://www.ssa.gov/" target="_blank">SSA Website</a>)</li>
         </ul>
 
         <b>၂။ 401(k) နှင့် IRA (စုဘူး)</b>
@@ -852,7 +857,6 @@ const guidesData = {
             <li><b>Nursing Home:</b> ကျန်းမာရေးစောင့်ရှောက်မှု လိုအပ်လာလျှင် သွားရောက်နေထိုင်ခြင်း (ကုန်ကျစရိတ်ကြီးမားသဖြင့် Long-term care insurance ထားသင့်သည်)။</li>
         </ul>
     `,
-
   marriage: `
         <h4>💍 အိမ်ထောင်ပြုခြင်းနှင့် ဘဏ္ဍာရေး</h4>
         
@@ -876,7 +880,7 @@ const guidesData = {
     `,
   credit: `
         <h4>💳 Credit Score (အကြွေးအမှတ်)</h4>
-        <p>အမေရိကတွင် "Credit Score မရှိလျှင် လူရာမဝင်" ဟု ဆိုနိုင်ပါသည်။ အိမ်ငှား၊ ကားဝယ်၊ ဖုန်းလိုင်းလျှောက်လျှင် Credit စစ်သည်။</p>
+        <p>အမေရိကတွင် "Credit Score မရှိလျှင် လူရာမဝင်" ဟု ဆိုနိုင်ပါသည်။ အိမ်ငှား၊ ကားဝယ်၊ ဖုန်းလိုင်းလျှောက်လျှင် Credit စစ်သည်။ (<a href="https://www.creditkarma.com/" target="_blank">Credit Karma</a>)</p>
         
         <b>၁။ Credit စတင်တည်ဆောက်နည်း</b>
         <ul>
@@ -890,10 +894,9 @@ const guidesData = {
             <li><b>Utilization:</b> ကဒ်ပါမစ်၏ 30% ထက်ကျော်ပြီး မသုံးပါနှင့်။ (ဥပမာ - $1000 ပါမစ်ရှိလျှင် $300 ထက်ပိုမသုံးပါနှင့်)။</li>
         </ul>
     `,
-
   scams: `
         <h4>⚠️ သတိထားရမည့် လိမ်နည်းများ (Scams)</h4>
-        <p>အမေရိကတွင် Phone/Email မှတဆင့် လိမ်လည်မှု အလွန်များပါသည်။</p>
+        <p>အမေရိကတွင် Phone/Email မှတဆင့် လိမ်လည်မှု အလွန်များပါသည်။ (<a href="https://www.ftc.gov/scams" target="_blank">FTC Scams Info</a>)</p>
         
         <b>၁။ IRS / Social Security Scam</b>
         <ul>
@@ -906,14 +909,13 @@ const guidesData = {
             <li>အိမ်ကနေလုပ်ရမယ်၊ တစ်နာရီ $50 ပေးမယ်၊ ဒါပေမယ့် ပစ္စည်းဖိုး Check လက်မှတ် အရင်သွင်းပေးမယ် ဆိုလျှင် လိမ်နည်းဖြစ်သည်။ (Check အတု ဖြစ်နေတတ်သည်)။</li>
         </ul>
     `,
-
   money_transfer: `
         <h4>💸 မြန်မာပြည် ငွေလွှဲခြင်း</h4>
         
         <b>၁။ တရားဝင် နည်းလမ်းများ</b>
         <ul>
             <li><b>Western Union / MoneyGram:</b> Walmart သို့မဟုတ် ဆိုင်များတွင် သွားလွှဲနိုင်သည်။ (Fee ပေးရသည်)။</li>
-            <li><b>Remitly / Wise:</b> ဖုန်း App မှတဆင့် ဘဏ်အကောင့်ချိတ်ပြီး လွှဲနိုင်သည်။ (အိမ်အရောက်ပို့ စနစ်များလည်း ရှိသည်)။</li>
+            <li><b>Remitly / Wise:</b> ဖုန်း App မှတဆင့် ဘဏ်အကောင့်ချိတ်ပြီး လွှဲနိုင်သည်။ (အိမ်အရောက်ပို့ စနစ်များလည်း ရှိသည်)။ (<a href="https://www.remitly.com/" target="_blank">Remitly</a>, <a href="https://wise.com/" target="_blank">Wise</a>)</li>
         </ul>
 
         <b>၂။ Hundi (ဟွန်ဒီ)</b>
@@ -922,13 +924,12 @@ const guidesData = {
             <li>Facebook Group များတွင် မေးမြန်းစုံစမ်းနိုင်သည်။</li>
         </ul>
     `,
-
   travel_transport: `
         <h4>✈️ ခရီးသွားလာရေး (Transport)</h4>
         
         <b>၁။ လေယာဉ်စီးခြင်း (Domestic Flight)</b>
         <ul>
-            <li>ID သို့မဟုတ် Passport မပါလျှင် စီးခွင့်မပြုပါ။ (Real ID လိုအပ်လာမည်)။</li>
+            <li>ID သို့မဟုတ် Passport မပါလျှင် စီးခွင့်မပြုပါ။ (Real ID လိုအပ်လာမည်)။ (<a href="https://www.tsa.gov/travel/security-screening/whatcanibring/all" target="_blank">TSA Rules</a>)</li>
             <li><b>TSA Rules:</b> လက်ဆွဲအိတ်ထဲတွင် အရည် (Liquid) 3.4oz (100ml) ထက်ပိုမထည့်ရ။ ဓား၊ ကပ်ကြေး မပါရ။</li>
         </ul>
 
@@ -936,73 +937,7 @@ const guidesData = {
         <ul>
             <li><b>Uber / Lyft:</b> တက္ကစီခေါ်သည့် App များဖြစ်သည်။ ကားမရှိခင် အလွန်အသုံးဝင်သည်။</li>
             <li><b>Bus / Subway:</b> မြို့ကြီးများ (NY, SF) တွင် "Transit Card" ဝယ်ပြီး စီးရသည်။ Google Maps တွင် Bus လာမည့်အချိန်ကို ကြည့်နိုင်သည်။</li>
-            <li><b>Amtrak / Greyhound:</b> မြို့နယ်ကျော် ခရီးသွားရန် ရထားနှင့် ဘတ်စ်ကားများ။</li>
-        </ul>
-    `,
-  healthcare: `
-        <h4>1. Medicaid (ဝင်ငွေနည်းသူများအတွက်)</h4>
-        <p>အစိုးရမှ ထောက်ပံ့သော အခမဲ့ သို့မဟုတ် တန်ဖိုးနည်း ကျန်းမာရေးအာမခံဖြစ်သည်။</p>
-        <ul>
-            <li><b>ဘယ်သူတွေရနိုင်လဲ:</b> ဝင်ငွေနည်းသော မိသားစုများ၊ ကိုယ်ဝန်ဆောင်များ၊ ကလေးများ၊ မသန်စွမ်းသူများ။</li>
-            <li><b>လျှောက်ရန်:</b> သက်ဆိုင်ရာပြည်နယ်၏ "Health Marketplace" (သို့) "Department of Human Services" တွင် လျှောက်ပါ။</li>
-            <li><b>မှတ်ချက်:</b> ဆေးခန်းပြလျှင် ပိုက်ဆံမကုန်ပါ။</li>
-        </ul>
-
-        <hr>
-        <h4>2. Medicare (သက်ကြီးရွယ်အိုများအတွက်)</h4>
-        <p>အသက် ၆၅ နှစ်နှင့်အထက် လူကြီးများအတွက် Federal အစိုးရ အစီအစဉ်ဖြစ်သည်။</p>
-        <ul>
-            <li>အမေရိကတွင် ၁၀ နှစ်ခန့် အခွန်ဆောင်ထားသူများ ရရှိသည်။</li>
-            <li>မသန်စွမ်းသူ (Disability) များလည်း ရနိုင်သည်။</li>
-        </ul>
-
-        <hr>
-        <h4>3. Private Insurance (အလုပ်မှပေးသော အာမခံ)</h4>
-        <p>ကုမ္ပဏီဝန်ထမ်းများသည် ကုမ္ပဏီမှပေးသော အာမခံကို ယူရလေ့ရှိသည်။ လစာထဲမှ တစ်စိတ်တစ်ပိုင်း ဖြတ်တောက်သည်။</p>
-    `,
-
-  urgent: `
-        <h4>Urgent Care vs Emergency Room (ER)</h4>
-        <p>အမေရိကတွင် ဆေးရုံမှားသွားလျှင် ဒေါ်လာ ထောင်ချီ ကုန်နိုင်သည်။</p>
-
-        <div style="background:#e3f2fd; padding:10px; border-radius:5px; margin-bottom:10px;">
-            <b>🏥 Urgent Care (သာမန် ဆေးခန်း)</b>
-            <ul>
-                <li><b>သွားသင့်သည့်အခြေအနေ:</b> ဖျားနာခြင်း၊ တုပ်ကွေး၊ အသေးစား ဓားရှခြင်း၊ အရိုးအက်ခြင်း၊ ယားနာ၊ ဗိုက်အောင့်ခြင်း။</li>
-                <li><b>ကုန်ကျစရိတ်:</b> သက်သာသည်။ ($100 - $200 ဝန်းကျင်၊ အာမခံရှိရင် ပိုသက်သာ)။</li>
-                <li>Appointment မလိုဘဲ ဝင်ပြနိုင်သည်။</li>
-            </ul>
-        </div>
-
-        <div style="background:#ffebee; padding:10px; border-radius:5px;">
-            <b>🚑 Emergency Room / ER (အရေးပေါ်ဌာန)</b>
-            <ul>
-                <li><b>သွားသင့်သည့်အခြေအနေ:</b> ရင်ဘတ်အောင့်ခြင်း (Heart attack)၊ လေဖြတ်ခြင်း (Stroke)၊ သွေးအလွန်အကျွံထွက်ခြင်း၊ သတိလစ်ခြင်း၊ အသက်ရှုမရခြင်း။</li>
-                <li><b>ကုန်ကျစရိတ်:</b> အလွန်ကြီးသည်။ ($1,000 မှ $10,000 ကျော်ထိ ကျနိုင်သည်)။</li>
-                <li>အသက်အန္တရာယ် စိုးရိမ်ရမှသာ သွားပါ။</li>
-            </ul>
-        </div>
-    `,
-
-  safety: `
-        <h4>၁။ ရဲဌာန (Police Department)</h4>
-        <ul>
-            <li><b>Emergency (911):</b> လူသတ်မှု၊ ဓားပြတိုက်မှု၊ မီးလောင်မှု၊ အသက်အန္တရာယ်ရှိချိန်မှသာ ခေါ်ပါ။ မြန်မာလို စကားပြန်တောင်းဆိုနိုင်သည် ("Burmese Interpreter please" ဟုပြောပါ)။</li>
-            <li><b>Non-Emergency (311):</b> ဆူညံမှု၊ လမ်းပိတ်မှု၊ ခွေးဟောင်သံ အနှောင့်အယှက်များအတွက် 311 ကိုခေါ်ပါ (သို့) Google တွင် "Non-emergency police number near me" ဟုရှာပါ။</li>
-        </ul>
-
-        <h4>၂။ အမျိုးသမီးရေးရာနှင့် အိမ်တွင်းအကြမ်းဖက်မှု</h4>
-        <ul>
-            <li>အိမ်တွင်းအကြမ်းဖက်ခံရပါက (Domestic Violence) ရဲတိုင်ခွင့်ရှိသည်။</li>
-            <li><b>National Hotline:</b> 1-800-799-7233 (၂၄ နာရီ ခေါ်ဆိုနိုင်သည်)။</li>
-            <li>Shelter (ခိုလှုံရာစခန်း) များတွင် အခမဲ့ နေထိုင်စားသောက်ခွင့် ပေးတတ်သည်။</li>
-        </ul>
-
-        <h4>၃။ တောရိုင်းတိရစ္ဆာန် ထိန်းသိမ်းရေး (Animal Control)</h4>
-        <ul>
-            <li>အိမ်ထဲသို့ မြွေ၊ ရက်ကွန်း (Raccoon)၊ တောခွေး ဝင်လာပါက ကိုယ်တိုင်မဖမ်းပါနှင့်။</li>
-            <li>Google တွင် <b>"Animal Control near me"</b> ဟုရှာပြီး ဖုန်းဆက်ပါ။</li>
-            <li>လမ်းဘေးခွေးလေခွေးလွင့် တွေ့လျှင်လည်း တိုင်ကြားနိုင်သည်။</li>
+            <li><b>Amtrak / Greyhound:</b> မြို့နယ်ကျော် ခရီးသွားရန် ရထားနှင့် ဘတ်စ်ကားများ။ (<a href="https://www.amtrak.com/" target="_blank">Amtrak</a>, <a href="https://www.greyhound.com/" target="_blank">Greyhound</a>)</li>
         </ul>
     `,
 };
@@ -1039,53 +974,59 @@ function searchMap(query) {
   }
 }
 
+// --- DYNAMIC YEAR FOOTER ---
+document.addEventListener('DOMContentLoaded', () => {
+    const yearEl = document.getElementById('currentYear');
+    if (yearEl) {
+        yearEl.textContent = new Date().getFullYear();
+    }
+});
+/* --
 // --- PWA SERVICE WORKER REGISTRATION ---
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("./service-worker.js")
-      .then((reg) => console.log("Service Worker registered", reg))
-      .catch((err) => console.log("Service Worker failed", err));
+      .then((reg) => console.log("Service Worker registered!", reg))
+      .catch((err) => console.error("Service Worker failed", err));
   });
 }
 
-// --- PWA INSTALL LOGIC ---
-let deferredPrompt;
+// --- PWA INSTALL LOGIC (FIXED) ---
+let deferredPrompt; // Install event ကို သိမ်းထားမည့် variable
 
-// 1. Capture the install prompt
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the mini-infobar from appearing on mobile
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    deferredPrompt = e;
-    console.log("Install prompt captured");
+// 1. Browser က Install လုပ်လို့ရပြီလို့ ပြောလာရင် ဒီ Event ကို ဖမ်းထားမယ်
+window.addEventListener("beforeinstallprompt", (e) => {
+  console.log("Install Prompt fired");
+  e.preventDefault(); // မူလ Browser အောက်က ပေါ်တာကို တားမယ်
+  deferredPrompt = e; // Event ကို သိမ်းထားမယ် (ခလုတ်နှိပ်မှ ပြမယ်)
+
+  // Install Icon ကို ပြမယ် (Optional: ခင်ဗျားက အမြဲပြထားရင် ဒါမလိုပါ)
 });
 
-// 2. Install Function (Called by button)
+// 2. Install Button နှိပ်ရင် ခေါ်မည့် Function
 async function installApp() {
-    // Android / Chrome / Edge (Supported Browsers)
-    if (deferredPrompt) {
-        // Show the install prompt
-        deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        // We've used the prompt, can't use it again
-        deferredPrompt = null;
-    } 
-    // iOS / Already Installed / Not Supported
-    else {
-        // ဖုန်းမှာ Hover မရလို့ နှိပ်ရင် စာပေါ်အောင် လုပ်မယ်
-        const tip = document.querySelector('.install-tip');
-        if (tip) {
-            tip.classList.toggle('show-mobile');
-            
-            // ၃ စက္ကန့်နေရင် ပြန်ပျောက်မယ်
-            setTimeout(() => {
-                tip.classList.remove('show-mobile');
-            }, 5000);
-        } else {
-            alert("To install:\n\niOS: Share -> Add to Home Screen\nAndroid: Menu -> Install App");
-        }
+  if (deferredPrompt) {
+    // Android/Chrome: သိမ်းထားတဲ့ Prompt ကို ထုတ်ပြမယ်
+    deferredPrompt.prompt();
+
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response: ${outcome}`);
+
+    // သုံးပြီးသွားရင် ပြန်ဖျက်မယ်
+    deferredPrompt = null;
+  } else {
+    // iOS သို့မဟုတ် Install ပြီးသား (သို့) Browser က မထောက်ပံ့ရင်
+    // Manual လမ်းညွှန်ပြမယ်
+    const tip = document.querySelector(".install-tip");
+    if (tip) {
+      tip.classList.add("show-mobile"); // CSS class for popup
+      setTimeout(() => tip.classList.remove("show-mobile"), 5000);
+    } else {
+      alert(
+        "To install:\n\niOS: Share -> Add to Home Screen\nAndroid: Menu -> Install App"
+      );
     }
+  }
 }
+  -- */
