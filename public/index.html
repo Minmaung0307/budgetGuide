@@ -6,7 +6,24 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+
+    <!-- PWA Theme Color -->
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="US Life" />
+
     <title>US Life Guide</title>
+
+    <!-- Manifest Link -->
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Icons (iOS & Favicon) -->
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
 
     <!-- Favicon -->
     <link
@@ -16,6 +33,7 @@
     />
 
     <link rel="stylesheet" href="styles.css" />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -44,9 +62,20 @@
     <div id="appScreen" class="screen">
       <header>
         <div class="logo">US Life 🇺🇸</div>
-        <button onclick="logout()" class="icon-btn">
-          <i class="fas fa-sign-out-alt"></i>
-        </button>
+        <div class="header-actions">
+          <!-- Install Button -->
+          <button
+            onclick="showInstallGuide()"
+            class="icon-btn"
+            style="color: #d1fae5"
+          >
+            <i class="fas fa-download"></i>
+          </button>
+          <!-- Logout Button -->
+          <button onclick="logout()" class="icon-btn" style="color: #ff6b6b">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
       </header>
 
       <div id="contentArea">
@@ -331,6 +360,106 @@
               <div class="g-icon">💬</div>
               <div class="g-title">English လေ့လာရန်</div>
             </div>
+
+            <!-- 11. Schooling (ခရမ်းရောင်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('school')"
+              style="background: #ede7f6; color: #4527a0"
+            >
+              <div class="g-icon">🎒</div>
+              <div class="g-title">ကျောင်းအပ်နှံခြင်း<br />(Education)</div>
+            </div>
+
+            <!-- 12. Parenting & Culture (ပန်းရောင်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('parenting')"
+              style="background: #fce4ec; color: #c2185b"
+            >
+              <div class="g-icon">👨‍👩‍👧‍👦</div>
+              <div class="g-title">မိသားစုနှင့်<br />ယဉ်ကျေးမှု</div>
+            </div>
+
+            <!-- 13. Tax & W2 (အစိမ်းရင့်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('tax_info')"
+              style="background: #e8f5e9; color: #1b5e20"
+            >
+              <div class="g-icon">💰</div>
+              <div class="g-title">Tax (W2 vs 1099)<br />အခွန်ဗဟုသုတ</div>
+            </div>
+
+            <!-- 14. Insurance (အပြာရင့်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('insurance_all')"
+              style="background: #e3f2fd; color: #0d47a1"
+            >
+              <div class="g-icon">🛡️</div>
+              <div class="g-title">Insurance<br />(ကား/အိမ်/လူ)</div>
+            </div>
+
+            <!-- 15. Retirement (ရွှေအိုရောင်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('retirement')"
+              style="background: #fff3e0; color: #e65100"
+            >
+              <div class="g-icon">👴👵</div>
+              <div class="g-title">အိုမင်းရေးရာ<br />(Retirement)</div>
+            </div>
+
+            <!-- 16. Marriage (ပန်းရောင်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('marriage')"
+              style="background: #fce4ec; color: #880e4f"
+            >
+              <div class="g-icon">💍</div>
+              <div class="g-title">အိမ်ထောင်ရေး<br />သိမှတ်ဖွယ်ရာ</div>
+            </div>
+
+            <!-- 17. Credit Score (ခရမ်းရင့်) - အရေးကြီးဆုံး -->
+            <div
+              class="menu-item"
+              onclick="showGuide('credit')"
+              style="background: #ede7f6; color: #311b92"
+            >
+              <div class="g-icon">💳</div>
+              <div class="g-title">Credit Score<br />တည်ဆောက်နည်း</div>
+            </div>
+
+            <!-- 18. Scams & Safety (လိမ္မော်ရင့်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('scams')"
+              style="background: #fff3e0; color: #bf360c"
+            >
+              <div class="g-icon">⚠️</div>
+              <div class="g-title">Scams<br />လိမ်နည်းများ</div>
+            </div>
+
+            <!-- 19. Money Transfer (စိမ်းဖန့်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('money_transfer')"
+              style="background: #e0f2f1; color: #004d40"
+            >
+              <div class="g-icon">💸</div>
+              <div class="g-title">ငွေလွှဲခြင်း<br />(Remittance)</div>
+            </div>
+
+            <!-- 20. Travel & Transport (မိုးပြာရင့်) -->
+            <div
+              class="menu-item"
+              onclick="showGuide('travel_transport')"
+              style="background: #e1f5fe; color: #01579b"
+            >
+              <div class="g-icon">✈️</div>
+              <div class="g-title">ခရီးသွားလာရေး<br />(Flight/Bus)</div>
+            </div>
           </div>
         </div>
 
@@ -503,7 +632,7 @@
               onclick="searchMap('burmese buddhist monastery')"
               style="background: #fff8e1; color: #f57f17"
             >
-              <div class="g-icon">pagoda</div>
+              <div class="g-icon">🛕</div>
               <div class="g-title">မြန်မာ<br />ဘုန်းကြီးကျောင်း</div>
             </div>
 
@@ -634,6 +763,24 @@
           <button onclick="closeModal('guideModal')">&times;</button>
         </div>
         <div id="guideContent" class="guide-body"></div>
+      </div>
+    </div>
+
+    <!-- Install Modal -->
+    <div id="installModal" class="modal">
+      <div class="modal-box">
+        <h3 style="color: #2563eb">📲 Install App</h3>
+        <div style="text-align: left; margin-top: 15px; font-size: 14px">
+          <p><b>Android:</b> Menu > "Install App"</p>
+          <p><b>iOS:</b> Share > "Add to Home Screen"</p>
+        </div>
+        <button
+          onclick="document.getElementById('installModal').style.display='none'"
+          class="primary"
+          style="margin-top: 20px; width: 100%"
+        >
+          OK
+        </button>
       </div>
     </div>
 

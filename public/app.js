@@ -26,17 +26,52 @@ function logout() {
   location.reload();
 }
 
+// --- AUTH STATE LISTENER (WHITELIST PROTECTION) ---
 auth.onAuthStateChanged((user) => {
   if (user) {
-    currentUser = user;
-    document.getElementById("authScreen").classList.remove("active");
-    document.getElementById("appScreen").classList.add("active");
-    document.getElementById("monthPicker").value = currentMonth;
-    loadData();
-    filterDataByMonth();
+    // Login ဝင်ဝင်ချင်း Loading ပြထားမယ် (Optional UX improvement)
+    document.body.style.cursor = "wait";
+
+    // Whitelist ထဲမှာ ဒီ Email ရှိမရှိ စစ်မယ်
+    const userEmail = user.email;
+
+    db.collection("whitelist")
+      .doc(userEmail)
+      .get()
+      .then((doc) => {
+        document.body.style.cursor = "default";
+
+        if (doc.exists) {
+          // (က) ခွင့်ပြုထားသူ ဖြစ်လျှင် -> App ကို ဖွင့်ပေးမယ်
+          currentUser = user;
+          document.getElementById("authScreen").classList.remove("active");
+          document.getElementById("appScreen").classList.add("active");
+
+          // Set Month & Load Data
+          document.getElementById("monthPicker").value = currentMonth;
+          loadData();
+          filterDataByMonth();
+        } else {
+          // (ခ) ခွင့်မပြုထားသူ ဖြစ်လျှင် -> သတိပေးပြီး Logout လုပ်မယ်
+          alert(
+            "Access Denied!\nAdmin ခွင့်ပြုချက်မရသေးပါ။\n(Email: " +
+              userEmail +
+              ")"
+          );
+          auth.signOut(); // ချက်ချင်း ပြန်ထွက်
+        }
+      })
+      .catch((error) => {
+        console.error("Error checking whitelist:", error);
+        alert("Connection Error or Permission Denied");
+        auth.signOut();
+      });
   } else {
+    // Logout ဖြစ်နေရင် Login Screen ပြမယ်
     document.getElementById("authScreen").classList.add("active");
     document.getElementById("appScreen").classList.remove("active");
+    currentUser = null;
+    document.body.style.cursor = "default";
   }
 });
 
@@ -69,44 +104,122 @@ function getCategoryIcon(cat) {
 
 // --- UPDATED LOAD DATA (For Subscriptions) ---
 function loadData() {
+  // 1. Subscriptions Load
   db.collection("subscriptions")
     .where("uid", "==", currentUser.uid)
     .onSnapshot((snap) => {
       const list = document.getElementById("subList");
       list.innerHTML = "";
 
+      // --- SHOW SAMPLE IF EMPTY ---
       if (snap.empty) {
-        list.innerHTML = `<div style="padding:10px; color:#aaa; font-size:12px;">No subscriptions</div>`;
-        return;
+        list.innerHTML = `
+                <div style="text-align:center; padding:5px; color:#aaa; font-size:11px;">နမူနာ (Samples)</div>
+                <!-- Sample 1 -->
+                <div class="sub-card" style="opacity: 0.6; pointer-events: none;">
+                    <div style="display:flex; justify-content:space-between;"><b>Netflix</b></div>
+                    <div style="font-size:12px; color:#666; margin:3px 0;">Due: 15</div>
+                    <div style="color:#d63031; font-weight:bold;">$15.99</div>
+                </div>
+                <!-- Sample 2 -->
+                <div class="sub-card" style="opacity: 0.6; pointer-events: none;">
+                    <div style="display:flex; justify-content:space-between;"><b>Gym</b></div>
+                    <div style="font-size:12px; color:#666; margin:3px 0;">Due: 1</div>
+                    <div style="color:#d63031; font-weight:bold;">$30.00</div>
+                </div>
+            `;
+        // Don't return here so we can still calculate balance (which will be 0)
+      } else {
+        snap.forEach((doc) => {
+          const d = doc.data();
+          const div = document.createElement("div");
+          div.className = "sub-card";
+          div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px;">${d.name}</b>
+                        <div style="display:flex; gap:5px;">
+                            <small onclick="openEditSub('${doc.id}', '${d.name}', '${d.cost}', '${d.day}')" style="color:#2563EB; cursor:pointer;"><i class="fas fa-pen"></i></small>
+                            <small onclick="deleteItem('subscriptions', '${doc.id}')" style="color:#EF4444; cursor:pointer;"><i class="fas fa-trash"></i></small>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; color:#666; margin:3px 0;">Due: ${d.day}</div>
+                    <div style="color:#d63031; font-weight:bold;">$${d.cost}</div>
+                `;
+          list.appendChild(div);
+        });
       }
+      filterDataByMonth(); // Recalculate balance
+    });
 
-      snap.forEach((doc) => {
-        const d = doc.data();
-        const div = document.createElement("div");
-        div.className = "sub-card";
-        div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:85px;">${d.name}</b>
-                    
-                    <div style="display:flex; gap:10px;">
-                        <!-- Edit Button -->
-                        <small onclick="openEditSub('${doc.id}', '${d.name}', '${d.cost}', '${d.day}')" style="color:#2563EB; cursor:pointer;">
-                            <i class="fas fa-pen"></i>
-                        </small>
-                        
-                        <!-- Delete Button (New) -->
-                        <small onclick="deleteItem('subscriptions', '${doc.id}')" style="color:#EF4444; cursor:pointer;">
-                            <i class="fas fa-trash"></i>
-                        </small>
+  // 2. Transactions Load (Last 50)
+  db.collection("transactions")
+    .where("uid", "==", currentUser.uid)
+    .orderBy("date", "desc")
+    .limit(50)
+    .onSnapshot((snap) => {
+      const list = document.getElementById("transList");
+      list.innerHTML = "";
+
+      // --- SHOW SAMPLE IF EMPTY ---
+      if (snap.empty) {
+        list.innerHTML = `
+                <div style="text-align:center; padding:10px; color:#aaa; font-size:11px;">နမူနာ (Samples)</div>
+                
+                <!-- Sample Income -->
+                <div class="trans-item" style="opacity: 0.6; pointer-events: none;">
+                    <div class="t-icon income">💰</div>
+                    <div class="t-info">
+                        <span class="t-title">Salary (လစာ)</span>
+                        <span class="t-date">2025-01-01</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="t-amount income">+$3000.00</div>
                     </div>
                 </div>
-                <div style="font-size:12px; color:#666; margin:3px 0;">Due Day: ${d.day}</div>
-                <div style="color:#d63031; font-weight:bold;">$${d.cost}</div>
-            `;
-        list.appendChild(div);
-      });
-      // Recalculate balance whenever subs change
-      filterDataByMonth();
+
+                <!-- Sample Expense -->
+                <div class="trans-item" style="opacity: 0.6; pointer-events: none;">
+                    <div class="t-icon expense">🍔</div>
+                    <div class="t-info">
+                        <span class="t-title">Walmart / ဈေးဝယ်</span>
+                        <span class="t-date">2025-01-02</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="t-amount expense">-$150.00</div>
+                    </div>
+                </div>
+             `;
+      } else {
+        snap.forEach((doc) => {
+          const d = doc.data();
+          const div = document.createElement("div");
+          div.className = "trans-item";
+          div.innerHTML = `
+                    <div class="t-icon ${d.type}">${getCategoryIcon(
+            d.category || "Other"
+          )}</div>
+                    <div class="t-info">
+                        <span class="t-title">${d.note || d.category}</span>
+                        <span class="t-date">${d.date}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="t-amount ${d.type}">${
+            d.type === "income" ? "+" : "-"
+          }$${d.amount}</div>
+                        <div style="margin-top:5px;">
+                            <small onclick="openEditTrans('${doc.id}', '${
+            d.type
+          }', '${d.amount}', '${d.note}', '${
+            d.date
+          }')" style="color:#2563EB; margin-right:8px; cursor:pointer;"><i class="fas fa-pen"></i></small>
+                            <small onclick="deleteItem('transactions', '${
+                              doc.id
+                            }')" style="color:#888; cursor:pointer;"><i class="fas fa-trash"></i></small>
+                        </div>
+                    </div>`;
+          list.appendChild(div);
+        });
+      }
     });
 }
 
@@ -609,6 +722,223 @@ const guidesData = {
             <li>အမှားပါမည်ကို မကြောက်ပါနှင့်။ သူတို့က နားလည်ပေးပါသည်။ ပြောမှသာ တိုးတက်ပါမည်။</li>
         </ul>
     `,
+  school: `
+        <h4>🇺🇸 အမေရိကန် ပညာရေးစနစ် (K-12)</h4>
+        <p>အမေရိကတွင် အစိုးရကျောင်း (Public School) များသည် အခမဲ့ဖြစ်သည်။ အသက် ၅ နှစ်မှ ၁၈ နှစ်အထိ မဖြစ်မနေ ကျောင်းတက်ရသည်။</p>
+        
+        <hr>
+        <b>၁။ ကျောင်းအပ်နှံခြင်း (Enrollment)</b>
+        <ul>
+            <li><b>School District:</b> မိမိနေထိုင်ရာ မြို့နယ် (Zip code) ပေါ်မူတည်ပြီး တက်ရမည့်ကျောင်း သတ်မှတ်ထားသည်။ တခြားမြို့နယ် သွားတက်၍မရပါ။</li>
+            <li><b>လိုအပ်သောစာရွက်များ:</b>
+                <ul>
+                    <li>ငှားရမ်းစာချုပ် (Lease Agreement) သို့မဟုတ် ရေမီးဘေလ် (လိပ်စာအတည်ပြုရန်)။</li>
+                    <li>ကလေး၏ မွေးစာရင်း (Birth Certificate/Passport)။</li>
+                    <li>ကာကွယ်ဆေး စာအုပ် (Immunization Records) - *ဒါမရှိရင် ကျောင်းလက်မခံပါ*။ (Health Department တွင် ဘာသာပြန်/ဆေးထိုး နိုင်သည်။)</li>
+                </ul>
+            </li>
+        </ul>
+
+        <hr>
+        <b>၂။ ကျောင်းပြောင်းခြင်း (Transfer)</b>
+        <ul>
+            <li>အိမ်ပြောင်းလျှင် ကျောင်းပါ ပြောင်းရတတ်သည်။ ကျောင်းဟောင်းမှ "Transfer Packet" တောင်းယူပြီး ကျောင်းသစ်တွင် ပေးရမည်။</li>
+        </ul>
+
+        <hr>
+        <b>၃။ အထူးအစီအစဉ်များ</b>
+        <ul>
+            <li><b>ESL (English as Second Language):</b> အင်္ဂလိပ်စကား မကျွမ်းကျင်သော ကလေးများအတွက် သီးသန့် အတန်းများရှိသည်။ အခမဲ့ဖြစ်သည်။</li>
+            <li><b>School Bus:</b> ကျောင်းနှင့် အိမ်ဝေးလျှင် အဝါရောင်ကျောင်းကား အခမဲ့ စီးနိုင်သည်။</li>
+            <li><b>Lunch:</b> ဝင်ငွေနည်းပါးလျှင် ကျောင်းတွင် အခမဲ့ (သို့) သက်သာသောနှုန်းဖြင့် နေ့လည်စာ လျှောက်ထားနိုင်သည်။</li>
+        </ul>
+    `,
+
+  parenting: `
+        <h4>👨‍👩‍👧‍👦 မိသားစု၊ ယဉ်ကျေးမှုနှင့် Culture Shock</h4>
+        
+        <div style="background:#ffebee; padding:10px; border-radius:5px; margin-bottom:15px; border-left: 4px solid red;">
+            <b>⚠️ အထူးသတိပြုရန် (CPS)</b><br>
+            အမေရိကတွင် ကလေးကို ရိုက်နှက်ဆုံးမခြင်း၊ အိမ်မှာ တစ်ယောက်တည်း ထားခဲ့ခြင်း (အသက် ၁၂ နှစ်အောက်) တို့သည် ဥပဒေနှင့် ငြိစွန်းပါသည်။ 
+            ကျောင်းဆရာ/ဆရာမများက ကလေးတွင် ဒဏ်ရာတွေ့ပါက <b>Child Protective Services (CPS)</b> သို့ တိုင်ကြားရမည့် တာဝန်ရှိသည်။ မိဘနှင့် ကလေး ခွဲထားခံရနိုင်သည်။
+        </div>
+
+        <b>၁။ မိဘနှင့် သားသမီး ဆက်ဆံရေး</b>
+        <ul>
+            <li><b>အရှေ့တိုင်း:</b> မိဘစကား နားထောင်ခြင်း၊ ရိုသေခြင်းကို အဓိကထားသည်။</li>
+            <li><b>အနောက်တိုင်း:</b> ကိုယ်ပိုင်လွတ်လပ်ခွင့် (Independence) နှင့် ကိုယ့်ယုံကြည်ချက်ကို ထုတ်ဖော်ပြောဆိုခြင်း (Critical Thinking) ကို ကျောင်းက သင်ပေးသည်။</li>
+            <li><b>အကြံပြုချက်:</b> ကလေးက ပြန်ပြောလျှင် "ခွာပြဲသည်" ဟု မယူဆဘဲ သူတို့၏ အမြင်ကို နားထောင်ပေးပါ။ သူငယ်ချင်းလို ဆွေးနွေးသည့် ပုံစံဖြင့် ဆက်ဆံပါ။</li>
+        </ul>
+
+        <hr>
+        <b>၂။ Culture Shock (အစားအသောက်/ကျန်းမာရေး)</b>
+        <ul>
+            <li><b>ကျန်းမာရေး:</b> မြန်မာပြည်လို ဖျားမှ ဆေးခန်းပြေးလို့ မရပါ။ Family Doctor (မိသားစုဆရာဝန်) ထံတွင် Appointment ယူရသည်။ အရေးပေါ်မှသာ ER သွားပါ။</li>
+            <li><b>အစားအသောက်:</b> Portion (ပမာဏ) ကြီးသည်။ အချိုကဲသည်။ ကျောင်းမုန့်များတွင် Cheese နှင့် အဆီများတတ်သည်။ အိမ်တွင် ကျန်းမာရေးနှင့်ညီညွတ်အောင် ချက်ပြုတ်ကျွေးမွေးပါ။</li>
+        </ul>
+
+        <hr>
+        <b>၃။ လူမှုဆက်ဆံရေး</b>
+        <ul>
+            <li><b>Privacy:</b> အမေရိကန်များသည် ကိုယ်ရေးကိုယ်တာကို အလွန်တန်ဖိုးထားသည်။ "လစာဘယ်လောက်ရလဲ"၊ "ဝလာတယ်နော်" စသည့် မေးခွန်းများကို ရှောင်ပါ။</li>
+            <li><b>Eye Contact:</b> စကားပြောလျှင် မျက်လုံးချင်းဆုံ ကြည့်ခြင်းသည် ယုံကြည်မှုရှိခြင်း ဖြစ်သည်။ ခေါင်းငုံ့နေခြင်းသည် မရိုသေခြင်း မဟုတ်ဘဲ၊ မလုံခြုံဟု ထင်မြင်စေသည်။</li>
+        </ul>
+    `,
+  tax_info: `
+        <h4>🇺🇸 အခွန်စနစ် (Tax System)</h4>
+        <p>အမေရိကတွင် ဧပြီလ ၁၅ ရက်နေ့သည် Tax Day ဖြစ်သည်။ အခွန်ဆောင်ခြင်းသည် ဥပဒေဖြစ်သည်။</p>
+        
+        <hr>
+        <b>၁။ W2 နှင့် 1099 ကွာခြားချက်</b>
+        <ul>
+            <li><b>W-2 (ဝန်ထမ်း):</b> ကုမ္ပဏီက လစာထဲမှ အခွန်ကို ကြိုဖြတ်ထားပေးသည်။ နှစ်ကုန်လျှင် W-2 စာရွက်ပို့ပေးသည်။ အခွန်ပြန်ရ (Refund) နိုင်ချေများသည်။</li>
+            <li><b>1099 (ကန်ထရိုက်/Uber/DoorDash):</b> ကုမ္ပဏီက အခွန်မဖြတ်ပေးပါ။ ရသမျှငွေ အကုန်ရသည်။ သို့သော် နှစ်ကုန်လျှင် မိမိဘာသာ အခွန်ပြန်ဆောင်ရသည်။ (ပိုက်ဆံကြိုစုထားဖို့ လိုသည်)။</li>
+        </ul>
+
+        <hr>
+        <b>၂။ Tax Refund (အခွန်ပြန်ရခြင်း)</b>
+        <ul>
+            <li>အစိုးရက သတ်မှတ်ထားသည်ထက် ပိုဆောင်မိလျှင် ပြန်အမ်းငွေ ရတတ်သည်။</li>
+            <li><b>Child Tax Credit:</b> ၁၇ နှစ်အောက် ကလေးရှိလျှင် တစ်ယောက်ကို $2,000 ခန့် အခွန်သက်သာခွင့် (သို့) ငွေပြန်ရနိုင်သည်။</li>
+            <li><b>EITC:</b> ဝင်ငွေနည်းပါးသူများအတွက် အစိုးရမှ ထောက်ပံ့သော အခွန်အမ်းငွေဖြစ်သည်။</li>
+        </ul>
+    `,
+
+  insurance_all: `
+        <h4>🛡️ အာမခံ (Insurance) လက်စွဲ</h4>
+        <p>အမေရိကတွင် "မဖြစ်မနေထားရမည့်အရာ" ဖြစ်သည်။ မရှိလျှင် ဒေဝါလီခံရနိုင်သည်။</p>
+        
+        <b>၁။ အရေးကြီး ဝေါဟာရများ</b>
+        <ul>
+            <li><b>Premium:</b> လစဉ် ပေးရသောကြေး။</li>
+            <li><b>Deductible:</b> ပြဿနာဖြစ်လျှင် အာမခံက မလျော်ပေးခင် ကိုယ့်အိတ်စိုက် ပေးရမည့်ငွေ။ (Deductible များလျှင် လစဉ်ကြေး သက်သာသည်)။</li>
+        </ul>
+
+        <hr>
+        <b>၂။ အမျိုးအစားများ</b>
+        <ul>
+            <li><b>Auto Insurance:</b> ကားတိုက်လျှင် သူများကို လျော်ပေးရန် (Liability) နှင့် ကိုယ့်ကား ပြင်ရန် (Full Coverage)။</li>
+            <li><b>Home/Renters Insurance:</b> မီးလောင်၊ ရေကြီး၊ ခိုးခံရလျှင် ပစ္စည်းများအတွက် လျော်ကြေးရသည်။ အိမ်ငှားနေသူများ Renters Insurance ($15/လ ခန့်) ထားသင့်သည်။</li>
+            <li><b>Life Insurance:</b> မိမိကွယ်လွန်လျှင် ကျန်ရစ်သူမိသားစု ဒုက္ခမရောက်အောင် ထားခြင်း။ (Term Life က ဈေးသက်သာသည်)။</li>
+        </ul>
+
+        <hr>
+        <b>၃။ Insurance Claim (လျော်ကြေးတောင်းနည်း)</b>
+        <ul>
+            <li><b>ကားတိုက်လျှင်:</b> ဓာတ်ပုံရိုက်ပါ၊ ရဲခေါ်ပါ (Police Report ယူပါ)၊ တစ်ဖက်လူရဲ့ Insurance ကဒ်ကို ဓာတ်ပုံရိုက်ပါ။ ပြီးမှ ကိုယ့် Agent ကို ဖုန်းဆက်ပါ။</li>
+            <li><b>အိမ်ကိစ္စ:</b> ပျက်စီးသွားသော ပစ္စည်းများကို ဓာတ်ပုံရိုက်ပြီး စာရင်းလုပ်ထားပါ။</li>
+        </ul>
+    `,
+
+  retirement: `
+        <h4>👴👵 အိုမင်းရေးရာနှင့် ပင်စင် (Retirement)</h4>
+        <p>အမေရိကတွင် သားသမီးက ပြန်ကျွေးမွေးသော ဓလေ့နည်းပါးသဖြင့် ကိုယ့်အားကိုယ်ကိုးရန် ပြင်ဆင်ရမည်။</p>
+        
+        <b>၁။ Social Security (အစိုးရပင်စင်)</b>
+        <ul>
+            <li>အလုပ်လုပ်ပြီး အခွန်ဆောင်ခဲ့သူများ အသက် ၆၂ နှစ် (သို့) ၆၇ နှစ်တွင် စတင်ခံစားခွင့်ရှိသည်။</li>
+            <li>၁၀ နှစ် (Credit 40) ပြည့်အောင် အခွန်ဆောင်ထားမှ ရရှိမည်။</li>
+        </ul>
+
+        <b>၂။ 401(k) နှင့် IRA (စုဘူး)</b>
+        <ul>
+            <li><b>401(k):</b> ကုမ္ပဏီက လုပ်ပေးသော စုငွေ။ တချို့ကုမ္ပဏီများက ကိုယ်ထည့်သလောက် ထပ်ဆောင်းထည့်ပေးသည် (Company Match - ဒါသည် အလကားရသော ပိုက်ဆံဖြစ်၍ ယူသင့်သည်)။</li>
+            <li><b>IRA:</b> မိမိဘာသာ သီးသန့်ဖွင့်သော ပင်စင်စုငွေစာရင်း။</li>
+        </ul>
+
+        <b>၃။ နေထိုင်မှုပုံစံများ</b>
+        <ul>
+            <li><b>Independent Living:</b> ကျန်းမာနေသရွေ့ ကိုယ့်အိမ် (သို့) Senior Apartment တွင် နေထိုင်ခြင်း။</li>
+            <li><b>Nursing Home:</b> ကျန်းမာရေးစောင့်ရှောက်မှု လိုအပ်လာလျှင် သွားရောက်နေထိုင်ခြင်း (ကုန်ကျစရိတ်ကြီးမားသဖြင့် Long-term care insurance ထားသင့်သည်)။</li>
+        </ul>
+    `,
+
+  marriage: `
+        <h4>💍 အိမ်ထောင်ပြုခြင်းနှင့် ဘဏ္ဍာရေး</h4>
+        
+        <b>၁။ ဥပဒေပိုင်းဆိုင်ရာ</b>
+        <ul>
+            <li><b>Marriage License:</b> လက်မထပ်မီ တရားရုံးတွင် လိုင်စင်အရင်လျှောက်ရသည်။</li>
+            <li><b>Green Card:</b> နိုင်ငံသားနှင့် လက်ထပ်လျှင် Green Card လျှောက်ခွင့်ရှိသည်။ (အိမ်ထောင်ရေး အစစ်ဖြစ်ကြောင်း သက်သေပြရမည်)။</li>
+        </ul>
+
+        <b>၂။ ငွေကြေးဆိုင်ရာ အကျိုးကျေးဇူးများ</b>
+        <ul>
+            <li><b>Joint Tax Filing:</b> လင်မယား နှစ်ယောက်ပေါင်းပြီး အခွန်ဆောင်လျှင် (Married Filing Jointly) အခွန်သက်သာခွင့် ပိုရတတ်သည်။</li>
+            <li><b>Health Insurance:</b> တစ်ယောက်က အလုပ်ကောင်းလျှင် ကျန်တစ်ယောက်ကိုပါ အာမခံထဲ ထည့်သွင်းနိုင်သည်။</li>
+            <li><b>Bank Accounts:</b> Joint Account ဖွင့်ပြီး အိမ်လခ၊ စားစရိတ်များကို အတူမျှဝေသုံးစွဲနိုင်သည်။</li>
+        </ul>
+
+        <b>၃။ Prenuptial Agreement (Prenup)</b>
+        <ul>
+            <li>ကွာရှင်းခဲ့လျှင် ပိုင်ဆိုင်မှု မည်သို့ခွဲဝေမည်ကို ကြိုတင်သဘောတူညီသော စာချုပ်ဖြစ်သည်။ (ပိုင်ဆိုင်မှု ကွာခြားလွန်းသူများအတွက် အရေးကြီးသည်)။</li>
+        </ul>
+    `,
+  credit: `
+        <h4>💳 Credit Score (အကြွေးအမှတ်)</h4>
+        <p>အမေရိကတွင် "Credit Score မရှိလျှင် လူရာမဝင်" ဟု ဆိုနိုင်ပါသည်။ အိမ်ငှား၊ ကားဝယ်၊ ဖုန်းလိုင်းလျှောက်လျှင် Credit စစ်သည်။</p>
+        
+        <b>၁။ Credit စတင်တည်ဆောက်နည်း</b>
+        <ul>
+            <li><b>Secured Credit Card:</b> ဘဏ်တွင် ကိုယ့်ပိုက်ဆံ $200/$500 ကာမ (Deposit) တင်ပြီး ကဒ်လျှောက်ပါ။ (Discover, Capital One တို့ လွယ်သည်)။</li>
+            <li>၆ လခန့် ပုံမှန်သုံးပြီး ပုံမှန်ပြန်ဆပ်လျှင် ရိုးရိုးကဒ် ပြောင်းပေးပြီး Score တက်လာမည်။</li>
+        </ul>
+
+        <b>၂။ အမှတ်တက်အောင် ဘယ်လိုနေမလဲ</b>
+        <ul>
+            <li><b>On Time Payment:</b> လစဉ် ဘေလ်ကို ရက်မကျော်စေပါနှင့်။ (Auto Pay လုပ်ထားပါ)။</li>
+            <li><b>Utilization:</b> ကဒ်ပါမစ်၏ 30% ထက်ကျော်ပြီး မသုံးပါနှင့်။ (ဥပမာ - $1000 ပါမစ်ရှိလျှင် $300 ထက်ပိုမသုံးပါနှင့်)။</li>
+        </ul>
+    `,
+
+  scams: `
+        <h4>⚠️ သတိထားရမည့် လိမ်နည်းများ (Scams)</h4>
+        <p>အမေရိကတွင် Phone/Email မှတဆင့် လိမ်လည်မှု အလွန်များပါသည်။</p>
+        
+        <b>၁။ IRS / Social Security Scam</b>
+        <ul>
+            <li>"အခွန်မဆောင်လို့ ဖမ်းတော့မယ်"၊ "SSN အပိတ်ခံရမယ်" ဟု ဖုန်းဆက်ခြိမ်းခြောက်လျှင် <b>ချက်ချင်းဖုန်းချပါ</b>။</li>
+            <li>အစိုးရဌာနများသည် ဖုန်းဆက်ပြီး ပိုက်ဆံ/Gift Card ဘယ်တော့မှ မတောင်းပါ။ စာတိုက်မှ စာပဲ ပို့ပါသည်။</li>
+        </ul>
+
+        <b>၂။ Job Offer Scam</b>
+        <ul>
+            <li>အိမ်ကနေလုပ်ရမယ်၊ တစ်နာရီ $50 ပေးမယ်၊ ဒါပေမယ့် ပစ္စည်းဖိုး Check လက်မှတ် အရင်သွင်းပေးမယ် ဆိုလျှင် လိမ်နည်းဖြစ်သည်။ (Check အတု ဖြစ်နေတတ်သည်)။</li>
+        </ul>
+    `,
+
+  money_transfer: `
+        <h4>💸 မြန်မာပြည် ငွေလွှဲခြင်း</h4>
+        
+        <b>၁။ တရားဝင် နည်းလမ်းများ</b>
+        <ul>
+            <li><b>Western Union / MoneyGram:</b> Walmart သို့မဟုတ် ဆိုင်များတွင် သွားလွှဲနိုင်သည်။ (Fee ပေးရသည်)။</li>
+            <li><b>Remitly / Wise:</b> ဖုန်း App မှတဆင့် ဘဏ်အကောင့်ချိတ်ပြီး လွှဲနိုင်သည်။ (အိမ်အရောက်ပို့ စနစ်များလည်း ရှိသည်)။</li>
+        </ul>
+
+        <b>၂။ Hundi (ဟွန်ဒီ)</b>
+        <ul>
+            <li>မြန်မာအသိုင်းအဝိုင်းကြားတွင် အသုံးများသည်။ ယုံကြည်စိတ်ချရသူကို ရှာဖွေပြီး လွှဲနိုင်သည်။</li>
+            <li>Facebook Group များတွင် မေးမြန်းစုံစမ်းနိုင်သည်။</li>
+        </ul>
+    `,
+
+  travel_transport: `
+        <h4>✈️ ခရီးသွားလာရေး (Transport)</h4>
+        
+        <b>၁။ လေယာဉ်စီးခြင်း (Domestic Flight)</b>
+        <ul>
+            <li>ID သို့မဟုတ် Passport မပါလျှင် စီးခွင့်မပြုပါ။ (Real ID လိုအပ်လာမည်)။</li>
+            <li><b>TSA Rules:</b> လက်ဆွဲအိတ်ထဲတွင် အရည် (Liquid) 3.4oz (100ml) ထက်ပိုမထည့်ရ။ ဓား၊ ကပ်ကြေး မပါရ။</li>
+        </ul>
+
+        <b>၂။ အများပြည်သူသုံး ယာဉ်များ</b>
+        <ul>
+            <li><b>Uber / Lyft:</b> တက္ကစီခေါ်သည့် App များဖြစ်သည်။ ကားမရှိခင် အလွန်အသုံးဝင်သည်။</li>
+            <li><b>Bus / Subway:</b> မြို့ကြီးများ (NY, SF) တွင် "Transit Card" ဝယ်ပြီး စီးရသည်။ Google Maps တွင် Bus လာမည့်အချိန်ကို ကြည့်နိုင်သည်။</li>
+            <li><b>Amtrak / Greyhound:</b> မြို့နယ်ကျော် ခရီးသွားရန် ရထားနှင့် ဘတ်စ်ကားများ။</li>
+        </ul>
+    `,
   healthcare: `
         <h4>1. Medicaid (ဝင်ငွေနည်းသူများအတွက်)</h4>
         <p>အစိုးရမှ ထောက်ပံ့သော အခမဲ့ သို့မဟုတ် တန်ဖိုးနည်း ကျန်းမာရေးအာမခံဖြစ်သည်။</p>
@@ -706,5 +1036,40 @@ function searchMap(query) {
       `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
       "_blank"
     );
+  }
+}
+
+// --- PWA SERVICE WORKER REGISTRATION ---
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then((reg) => console.log("Service Worker registered", reg))
+      .catch((err) => console.log("Service Worker failed", err));
+  });
+}
+
+// --- PWA INSTALL LOGIC ---
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Chrome မှာ အလိုအလျောက်မပြဘဲ သိမ်းထားမယ်
+  e.preventDefault();
+  deferredPrompt = e;
+});
+
+function showInstallGuide() {
+  // Android/Chrome ဖြစ်ပြီး Prompt ရှိနေရင် တန်းပြမယ်
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === "accepted") {
+        console.log("User accepted the install prompt");
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    // iOS သို့မဟုတ် Prompt မပေါ်ရင် Manual Guide ပြမယ်
+    document.getElementById("installModal").style.display = "flex";
   }
 }
