@@ -16,7 +16,7 @@
     />
     <meta name="apple-mobile-web-app-title" content="US Life" />
 
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <title>US Life Guide</title>
 
@@ -64,17 +64,32 @@
     <div id="appScreen" class="screen">
       <header>
         <div class="logo">US Life 🇺🇸</div>
-        <div class="header-actions">
-          <!-- Install Button -->
-          <button
-            onclick="showInstallGuide()"
-            class="icon-btn"
-            style="color: #d1fae5"
-          >
-            <i class="fas fa-download"></i>
-          </button>
-          <!-- Logout Button -->
-          <button onclick="logout()" class="icon-btn" style="color: #ff6b6b">
+
+        <div style="display: flex; gap: 15px; align-items: center">
+          <!-- INSTALL ICON & TOOLTIP -->
+          <div class="install-box">
+            <!-- onclick="installApp()" ကို ထပ်ဖြည့်လိုက်ပါ -->
+            <button class="icon-btn" onclick="installApp()">
+              <i class="fas fa-download"></i>
+            </button>
+
+            <!-- Tooltip (အဟောင်းအတိုင်းထားပါ) -->
+            <div class="install-tip">
+              <div style="margin-bottom: 5px">
+                <i class="fab fa-apple"></i> <b>iOS (Safari):</b><br />
+                Share <i class="fas fa-share-square"></i> နှိပ်ပြီး "Add to Home
+                Screen" ကို ရွေးပါ။
+              </div>
+              <div>
+                <i class="fab fa-android"></i> <b>Android (Chrome):</b><br />
+                Menu <i class="fas fa-ellipsis-v"></i> နှိပ်ပြီး "Install App"
+                ကို ရွေးပါ။
+              </div>
+            </div>
+          </div>
+
+          <!-- LOGOUT BUTTON -->
+          <button onclick="logout()" class="icon-btn">
             <i class="fas fa-sign-out-alt"></i>
           </button>
         </div>

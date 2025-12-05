@@ -1052,24 +1052,40 @@ if ("serviceWorker" in navigator) {
 // --- PWA INSTALL LOGIC ---
 let deferredPrompt;
 
-window.addEventListener("beforeinstallprompt", (e) => {
-  // Chrome မှာ အလိုအလျောက်မပြဘဲ သိမ်းထားမယ်
-  e.preventDefault();
-  deferredPrompt = e;
+// 1. Capture the install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    console.log("Install prompt captured");
 });
 
-function showInstallGuide() {
-  // Android/Chrome ဖြစ်ပြီး Prompt ရှိနေရင် တန်းပြမယ်
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === "accepted") {
-        console.log("User accepted the install prompt");
-      }
-      deferredPrompt = null;
-    });
-  } else {
-    // iOS သို့မဟုတ် Prompt မပေါ်ရင် Manual Guide ပြမယ်
-    document.getElementById("installModal").style.display = "flex";
-  }
+// 2. Install Function (Called by button)
+async function installApp() {
+    // Android / Chrome / Edge (Supported Browsers)
+    if (deferredPrompt) {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        // We've used the prompt, can't use it again
+        deferredPrompt = null;
+    } 
+    // iOS / Already Installed / Not Supported
+    else {
+        // ဖုန်းမှာ Hover မရလို့ နှိပ်ရင် စာပေါ်အောင် လုပ်မယ်
+        const tip = document.querySelector('.install-tip');
+        if (tip) {
+            tip.classList.toggle('show-mobile');
+            
+            // ၃ စက္ကန့်နေရင် ပြန်ပျောက်မယ်
+            setTimeout(() => {
+                tip.classList.remove('show-mobile');
+            }, 5000);
+        } else {
+            alert("To install:\n\niOS: Share -> Add to Home Screen\nAndroid: Menu -> Install App");
+        }
+    }
 }
