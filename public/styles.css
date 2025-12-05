@@ -669,3 +669,34 @@ button.primary {
     opacity: 1 !important;
     top: 120%; /* လက်နဲ့မကွယ်အောင် နည်းနည်းအောက်ချ */
 }
+
+/* --- MODAL CLOSE BUTTON (X) FIX --- */
+
+/* Modal Header ထဲက Button ကို သီးသန့် ပြင်မယ် */
+.modal-header button {
+    width: 35px !important;   /* အကျယ် အသေပေးမယ် (မရှည်တော့ဘူး) */
+    height: 35px !important;  /* အမြင့် အသေပေးမယ် (အဝိုင်းဖြစ်ဖို့) */
+    background-color: #F3F4F6; /* နောက်ခံ မီးခိုးနု */
+    color: #EF4444;           /* (x) ကို အနီရောင် ထားမယ် */
+    border: none;
+    border-radius: 50%;       /* အဝိုင်းပုံစံ */
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    
+    /* စာလုံးကို အလယ်တည့်တည့်ပို့မယ် */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+/* Mouse တင်ရင် အရောင်ပြောင်းမယ် */
+.modal-header button:hover {
+    background-color: #EF4444;
+    color: white;
+    transform: scale(1.1);
+}
