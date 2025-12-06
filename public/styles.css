@@ -616,214 +616,147 @@ button.primary {
 
 /* --- INSTALL TOOLTIP STYLES --- */
 .install-box {
-  position: relative; /* Tooltip တည်နေရာအတွက် */
-  display: inline-block;
+    position: relative; /* Tooltip တည်နေရာအတွက် */
+    display: inline-block;
 }
 
 /* ပုံမှန်အချိန်မှာ ဖျောက်ထားမည် */
 .install-tip {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  top: 100%; /* ခလုတ်ရဲ့ အောက်တည့်တည့် */
-  right: 0; /* ညာဘက်ကပ် */
-  background-color: #333;
-  color: #fff;
-  width: 220px;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  z-index: 1000;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: opacity 0.3s, visibility 0.3s;
-  margin-top: 10px; /* ခလုတ်နဲ့ နည်းနည်းခွာမယ် */
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%; /* ခလုတ်ရဲ့ အောက်တည့်တည့် */
+    right: 0;  /* ညာဘက်ကပ် */
+    background-color: #333;
+    color: #fff;
+    width: 220px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: opacity 0.3s, visibility 0.3s;
+    margin-top: 10px; /* ခလုတ်နဲ့ နည်းနည်းခွာမယ် */
 }
 
 /* မျှားခေါင်းလေး (အပေါ်ထောင်) */
 .install-tip::after {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  right: 15px; /* ခလုတ်နဲ့ တည့်အောင် ချိန် */
-  border-width: 8px;
-  border-style: solid;
-  border-color: transparent transparent #333 transparent;
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    right: 15px; /* ခလုတ်နဲ့ တည့်အောင် ချိန် */
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
 }
 
 /* Hover လုပ်ရင် ပေါ်လာမည် */
 .install-box:hover .install-tip {
-  visibility: visible;
-  opacity: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 /* Mobile မှာ နှိပ်ရင် ပျောက်မသွားအောင် (Optional) */
 .install-box:active .install-tip {
-  visibility: visible;
-  opacity: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 /* Mobile မှာ နှိပ်ရင် ပေါ်မည့် Class (JS ကနေ ထည့်ပေးမှာပါ) */
 .install-tip.show-mobile {
-  visibility: visible !important;
-  opacity: 1 !important;
-  top: 120%; /* လက်နဲ့မကွယ်အောင် နည်းနည်းအောက်ချ */
+    visibility: visible !important;
+    opacity: 1 !important;
+    top: 120%; /* လက်နဲ့မကွယ်အောင် နည်းနည်းအောက်ချ */
 }
 
 /* --- MODAL CLOSE BUTTON (X) FIX --- */
 
 /* Modal Header ထဲက Button ကို သီးသန့် ပြင်မယ် */
 .modal-header button {
-  width: 35px !important; /* အကျယ် အသေပေးမယ် (မရှည်တော့ဘူး) */
-  height: 35px !important; /* အမြင့် အသေပေးမယ် (အဝိုင်းဖြစ်ဖို့) */
-  background-color: #f3f4f6; /* နောက်ခံ မီးခိုးနု */
-  color: #ef4444; /* (x) ကို အနီရောင် ထားမယ် */
-  border: none;
-  border-radius: 50%; /* အဝိုင်းပုံစံ */
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-
-  /* စာလုံးကို အလယ်တည့်တည့်ပို့မယ် */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin-left: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s;
+    width: 35px !important;   /* အကျယ် အသေပေးမယ် (မရှည်တော့ဘူး) */
+    height: 35px !important;  /* အမြင့် အသေပေးမယ် (အဝိုင်းဖြစ်ဖို့) */
+    background-color: #F3F4F6; /* နောက်ခံ မီးခိုးနု */
+    color: #EF4444;           /* (x) ကို အနီရောင် ထားမယ် */
+    border: none;
+    border-radius: 50%;       /* အဝိုင်းပုံစံ */
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    
+    /* စာလုံးကို အလယ်တည့်တည့်ပို့မယ် */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
 }
 
 /* Mouse တင်ရင် အရောင်ပြောင်းမယ် */
 .modal-header button:hover {
-  background-color: #ef4444;
-  color: white;
-  transform: scale(1.1);
+    background-color: #EF4444;
+    color: white;
+    transform: scale(1.1);
 }
 
 /* --- HEADER USER PROFILE --- */
 .header-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.2); /* အကြည်ရောင် နောက်ခံ */
-  padding: 5px 12px 5px 5px;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: background 0.3s;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2); /* အကြည်ရောင် နောက်ခံ */
+    padding: 5px 12px 5px 5px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
 .header-profile:hover {
-  background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .header-profile img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  object-fit: cover;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    object-fit: cover;
 }
 
 .header-profile span {
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  max-width: 100px; /* နာမည်ရှည်ရင် နေရာမစားအောင် */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    max-width: 100px; /* နာမည်ရှည်ရင် နေရာမစားအောင် */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Mobile Responsive: ဖုန်းသေးရင် နာမည်ဖျောက်ပြီး ပုံပဲပြမယ် */
 @media (max-width: 400px) {
-  .header-profile span {
-    display: none;
-  }
-  .header-profile {
-    padding: 5px; /* စာမပါတော့ ပိုကျဉ်းမယ် */
-    border-radius: 50%;
-  }
-  .header-profile i {
-    display: none; /* Icon ပါ ဖျောက်မယ် */
-  }
+    .header-profile span {
+        display: none;
+    }
+    .header-profile {
+        padding: 5px; /* စာမပါတော့ ပိုကျဉ်းမယ် */
+        border-radius: 50%;
+    }
+    .header-profile i {
+        display: none; /* Icon ပါ ဖျောက်မယ် */
+    }
 }
 
 /* --- APP FOOTER --- */
 .app-footer {
-  text-align: center;
-  padding: 20px;
-  color: #9ca3af;
-  font-size: 0.85rem;
-  margin-top: 20px;
-  border-top: 1px solid #e5e7eb;
-  width: 100%;
-}
-
-/* --- PRICING UI --- */
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.price-card {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 15px 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
-  background: white;
-}
-
-.price-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-  border-color: #2563eb;
-}
-
-.price-card h3 {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-  color: #555;
-}
-.price {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #2563eb;
-  margin-bottom: 5px;
-}
-
-/* Badges */
-.price-card.popular {
-  border: 2px solid #2563eb;
-  background: #f0f9ff;
-}
-.badge {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2563eb;
-  color: white;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-.price-card.premium {
-  background: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
-  border: none;
-  color: white;
-}
-.price-card.premium h3,
-.price-card.premium small {
-  color: #ccc;
-}
-.price-card.premium .price {
-  color: #ffd700;
+    text-align: center;
+    padding: 20px;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    width: 100%;
 }
